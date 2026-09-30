@@ -3,267 +3,832 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Objection script testing - Full Option (iOS Compatible)</title>
+    <title>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD) - พร้อม TSR Group & Superbase Tracking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
-        body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
-        .container { max-width: 1000px; margin-top: 30px; margin-bottom: 50px; }
-        .part-button { margin-right: 10px; margin-bottom: 10px; }
-        .question-item { background-color: #ffffff; border-left: 5px solid #0d6efd; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .question-title { font-weight: bold; color: #343a40; margin-bottom: 10px; }
-        .answer-area { margin-top: 15px; padding: 10px; border-top: 1px solid #dee2e6; display: none; }
-        .answer-area p { margin-bottom: 5px; white-space: pre-wrap; }
-        .audio-container { background-color: #e9ecef; border-radius: 5px; padding: 10px; margin-top: 10px; }
-        .play-audio-btn { background-color: #28a745; color: white; border: none; padding: 5px 15px; border-radius: 5px; margin-right: 10px; transition: background-color 0.3s; }
-        .play-audio-btn:hover { background-color: #1e7e34; }
-        .placeholder-link { font-style: italic; color: #dc3545; }
+        /* --- Global Styles --- */
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0; 
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto; 
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 15px;
+        }
+        h1 {
+            color: #007bff;
+            font-weight: 700;
+        }
+        h2 {
+            color: #007bff;
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+        }
+
+        /* --- Input and Part Selection --- */
+        .user-info, .part-selection {
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        #inputUserName {
+            padding: 10px;
+            max-width: 300px; 
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .part-selection {
+            border-top: none; 
+            padding-top: 0;
+        }
+
+        .group-radio-option {
+            display: inline-block;
+            cursor: pointer;
+            padding: 8px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            transition: all 0.2s;
+            font-size: 0.9em;
+            margin: 5px;
+        }
+        .group-radio-input:checked + .group-radio-option {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+            font-weight: 700;
+        }
+        .group-radio-input { display: none; }
+
+        .part-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .part-button {
+            flex: 1; 
+            min-width: 120px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #007bff;
+            border-radius: 6px;
+            background-color: #fff;
+            color: #007bff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .part-button:hover, .part-button.active {
+            background-color: #007bff;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        /* --- Exam Area Layout (Responsive) --- */
+        #examArea {
+            display: grid;
+            grid-template-columns: 2fr 1fr; 
+            gap: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .question-item {
+                font-size: 0.9em; 
+            }
+            #examArea {
+                grid-template-columns: 1fr; 
+            }
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+        }
+        
+        .question-panel {
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .question-content, .required-answer {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-size: 1.1em; 
+        }
+        .question-content {
+            background-color: #e0f7fa; 
+            border-left: 5px solid #00bcd4;
+        }
+        .required-answer {
+            background-color: #ffeccf;
+            border-left: 5px solid #ff9800;
+        }
+        
+        .recording-controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #recordingStatus {
+            font-weight: 700;
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #007bff;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            transition: opacity 0.2s, transform 0.2s;
+            font-size: 1em;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-danger { background-color: #dc3545; }
+        .btn-success { background-color: #28a745; }
+        .btn-primary { background-color: #007bff; margin-top: 20px; width: 100%;} 
+
+        #playbackControls {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 15px;
+            padding: 10px;
+            border-top: 1px solid #eee;
+        }
+        #playbackAudio {
+            flex-grow: 1;
+            min-width: 200px;
+        }
+        #sendQuestionBtn {
+            flex-shrink: 0;
+            font-size: 1.1em;
+        }
+
+        .question-list-panel {
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .question-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .question-item:hover, .question-item.active {
+            background-color: #e9f7ff;
+            font-weight: 700;
+            border-left: 3px solid #007bff;
+        }
+        .status-icon {
+            font-size: 1.2em;
+            margin-left: 5px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            display: none; 
+            font-weight: 700;
+        }
+        .alert.info { background-color: #e7f7ff; color: #0056b3; border: 1px solid #b8daff; }
+        .alert.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert.warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            font-size: 1.8em;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2 class="text-center text-primary mb-4">ระบบจำลองการตอบข้อโต้แย้ง (Audio Ready)</h2>
-        <p class="text-center text-muted">รองรับการฟังเสียงบน iOS และ Android</p>
-        
-        <div class="mb-4">
-            <h4 class="mb-3">🎯 เลือกกลุ่มผู้ใช้งาน:</h4>
-            <div id="groupButtons">
-                <button class="btn btn-success part-button" onclick="showPart(1)"><i class="fas fa-seedling me-1"></i> New Star</button>
-                <button class="btn btn-warning part-button" onclick="showPart(2)"><i class="fas fa-user-plus me-1"></i> The Moon</button>
-                <button class="btn btn-danger part-button" onclick="showPart(3)"><i class="fas fa-headset me-1"></i> The Sun</button>
+        <header>
+            <h1>แบบทดสอบการพูดและการบันทึกเสียง (Voice HD)</h1>
+            <p>กรุณาทำแบบทดสอบให้ครบ 90 ข้อ (3 Part) โดยบันทึกเสียงทีละข้อ และกดส่งเมื่อตรวจสอบไฟล์เสียงแล้ว</p>
+        </header>
+
+        <div id="mainAlert" class="alert info"></div>
+
+        <div class="user-info">
+            <h2>1. ข้อมูลผู้เข้าสอบ</h2>
+            <label for="inputUserName">ชื่อ-นามสกุล/รหัสพนักงาน:</label>
+            <input type="text" id="inputUserName" onchange="saveUserName()" placeholder="กรุณากรอกชื่อ-นามสกุล/รหัสพนักงาน" required>
+            
+            <div style="margin-top: 20px;">
+                <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+                    เลือกกลุ่มพนักงาน (TSR Group):
+                </label>
+                <div id="tsrGroupSelection" style="text-align: center;"></div>
             </div>
         </div>
-        
-        <div class="mb-4">
-            <h4 class="mb-3">📚 เลือก Part การฝึกซ้อม:</h4>
-            <div id="partButtons"></div>
+
+        <div class="part-selection">
+            <h2>2. เลือก Part ที่ต้องการทำแบบทดสอบ</h2>
+            <div class="part-buttons">
+                <button id="btnPart1" class="part-button" onclick="loadPart('part1')">Part 1 (30 ข้อ)</button>
+                <button id="btnPart2" class="part-button" onclick="loadPart('part2')">Part 2 (30 ข้อ)</button>
+                <button id="btnPart3" class="part-button" onclick="loadPart('part3')">Part 3 (30 ข้อ)</button>
+            </div>
         </div>
 
-        <div id="questionArea">
-            <div class="alert alert-info text-center">
-                <i class="fas fa-hand-point-up me-2"></i> กรุณาเลือก **New Star** หรือ **Part 1** เพื่อเริ่มการฝึกซ้อม
+        <div id="examArea" style="display: none;">
+            <div class="question-panel">
+                <h2 id="currentQuestionTitle">Part 1: คำถามข้อที่ 1</h2>
+                
+                <div class="question-content">
+                    <p><strong>คำถาม:</strong> <span id="questionPrompt">...</span></p>
+                </div>
+
+                <div class="required-answer">
+                    <p><strong>แนวทางคำตอบที่ต้องการ:</strong> <span id="requiredAnswer">...</span></p>
+                </div>
+
+                <p id="recordingStatus" style="font-weight: 700; margin-top: 20px;">สถานะ: ยังไม่ได้เริ่มบันทึกเสียง</p>
+
+                <div class="recording-controls">
+                    <button id="startRecBtn" class="btn btn-success" onclick="handleStartRecording()">เริ่มบันทึกเสียง</button>
+                    <button id="stopRecBtn" class="btn btn-danger" onclick="handleStopRecording()" disabled>หยุดบันทึก</button>
+                </div>
+
+                <div id="playbackControls">
+                    <audio id="playbackAudio" controls style="display: none;"></audio>
+                    <button id="sendQuestionBtn" onclick="handleSingleSubmission()" class="btn btn-success" style="display: none;" disabled>
+                        ส่งคำตอบข้อนี้ (บันทึกและส่ง)
+                    </button>
+                </div>
+
+                <button id="submitBtn" onclick="submitExam()" class="btn btn-primary" disabled>
+                    ส่งงาน Part (ส่งแล้ว 0/30 ข้อ)
+                </button>
+            </div>
+
+            <div class="question-list-panel">
+                <h3>รายการคำถาม</h3>
+                <div id="questionList"></div>
             </div>
         </div>
     </div>
+    
+    <div id="loadingOverlay">
+        <p>กำลังดำเนินการส่งข้อมูล... กรุณารอสักครู่</p>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        
-        // ข้อมูลคำถามและลิงก์เสียง (ใช้ Data เดิมของคุณได้เลย ตรงนี้ผมใส่ตัวอย่างไว้ให้)
-const scripts = [
-            // --- PART 1: การรับมือคำปฏิเสธต้นสาย (1-30) ---
-            { id: 1, part: 1, q: "ไม่ว่างครับ กำลังยุ่งอยู่เลย", a: "ขออภัยที่รบกวนเวลาครับคุณ... ผมใช้เวลาไม่ถึง 1 นาทีแจ้งสิทธิประโยชน์สั้นๆ ไว้ก่อน แล้วค่อยนัดเวลาที่คุณ... สะดวกคุยอีกครั้งได้ไหมครับ?", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_1.wav" },
-            { id: 2, part: 1, q: "มีประกันเยอะแล้วครับ ไม่เอาเพิ่มแล้ว", a: "ดีเลยครับคุณ... แสดงว่าคุณ... วางแผนมาดีมาก โครงการนี้จะเข้ามาเสริมในส่วนที่ประกันเดิมอาจจะยังไม่ครอบคลุม ลองฟังดูเป็นข้อมูลสั้นๆ นะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_2.wav" },
-            { id: 3, part: 1, q: "ไม่สนใจครับ เรื่องประกันน่ารำคาญ", a: "เข้าใจครับคุณ... หลายท่านก็เคยรู้สึกแบบนี้ แต่โครงการนี้เราเน้นช่วยเรื่องค่ารักษาพยาบาลจริงๆ ลองฟังจุดเด่นสัก 30 วินาทีนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_3.wav" },
-            { id: 4, part: 1, q: "ส่งรายละเอียดเข้า Line มาก่อนได้ไหม?", a: "เนื่องจากว่าโครงการนี้เป็นโคงการพิเศษ ทีจะให้เจ้าหน้าที่โทรมาเรียนแจ้ง กับลูกค้าคนพิเศษโดยตรงจึงไม่ได้มีเอกสารจัดส่งให้ แต่ถ้าหากเกิดข้อสงสัยในข้อมูลตรงไหน ก็สอบถามเจ้าหน้าที่ได้เลยครับ?", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_4.wav" },
-            { id: 5, part: 1, q: "กำลังขับรถอยู่ครับ คุยไม่ได้", a: "ขอโทษด้วยครับคุณสมชาย เพื่อความปลอดภัย คุณสมชาย สะดวกใช้สปิคเกอร์โฟนในรถเพื่อรับข้อมูลได้หรือไม่ครับ ถ้าไม่มีเดี๋ยวผมขออนุญาตติดต่อกลับหาคุณสมชาย อีกครั้งในช่วงเวลาที่สะดวกดีไหมครับ?", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_5.wav" },
-            { id: 6, part: 1, q: "ไม่มีเงินครับ ช่วงนี้เศรษฐกิจไม่ดี", a: "เข้าใจเลยครับคุณสมชาย แต่โครงการนี้เบี้ยเริ่มต้นแค่วันละไม่กี่สิบบาท ออกแบบมาเพื่อช่วยแบ่งเบาภาระในวันที่เศรษฐกิจไม่ดี โดยเฉพาะครับ คุณสมชาย สามารถเริ่มต้นเก็บออม เบาๆไปก่อน อนาคตค่อยเพิ่มก็ได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_6.wav" },
-            { id: 7, part: 1, q: "เบื่อพวกโทรมาขายประกันมาก", a: "ต้องขออภัยจริงๆ ครับคุณสมชาย แต่วันนี้ผมมาในฐานะที่ปรึกษาเพื่อแจ้งสิทธิประโยชน์เฉพาะกลุ่มสมาชิก บัตรเครดิต คุณสมชาย ลองฟังข้อมูลก่อนตัดสินใจสักครู่นะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_7.wav" },
-            { id: 8, part: 1, q: "ขอวางสายเลยนะ ไม่คุย", a: "สักครู่นะครับคุณ... ผมขอเวลาแค่ 15 วินาทีบอกจุดสำคัญที่สุด แล้วถ้าคุณ... ไม่สนใจจริงๆ ผมจะไม่รบกวนต่อเลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_8.wav" },
-            { id: 9, part: 1, q: "มีสวัสดิการบริษัทดีอยู่แล้ว", a: "เยี่ยมเลยครับคุณสมชาย โครงการนี้จะเข้าไปช่วยจ่ายส่วนเกินที่สวัสดิการบริษัทอาจจะครอบคลุมไม่ถึง เพื่อให้คุณสมชาย ไม่ต้องรับผิดชอบค่าใช้จ่ายเองครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_9.wav" },
-            { id: 10, part: 1, q: "ทำไปก็เคลมยาก เคยมีประสบการณ์ไม่ดี", a: "เสียใจที่คุณสมชาย ต้องเจอแบบนั้นครับ แต่ปัจจุบันเรามีระบบการเคลมที่โปร่งใสและรวดเร็วขึ้นมาก อยากให้ลองเปิดใจดูมาตรฐานใหม่ของเราครับซึ่งการเบิกเคลมเป็นเรื่องที่บริษัทเราให้ความสำคัญเป็นเรื่องแรกเพื่อให้ลูกค้าได้มีประสบการที่ดีแล้วบอกต่อครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_10.wav" },
-            { id: 11, part: 1, q: "เอาเบอร์มาจากไหน บอกมาสิ?", a: "เราเป็นพันธมิตรกับสถาบันการเงินที่คุณสมชาย ใช้งานอยู่ครับ จึงได้รับสิทธิในการมอบโครงการพิเศษนี้ให้คุณสมชาย ครับ สะดวกรับข้อมูลสักครุ่นะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/1_11.wav" },
-            { id: 12, part: 1, q: "ทำไมถึงได้เบอร์ผมมา?", a: "เราได้รับสิทธิจากสถาบันการเงินในการแจ้งข้อมูลให้กับกลุ่มลูกค้าที่มีประวัติการชำระดีครับ เพื่อมอบสิทธิพิเศษที่คุณ... ควรได้รับครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q12/Sornkornchon_P1_P1Q12_1763382417117.webm" },
-            { id: 13, part: 1, q: "อายุเยอะแล้ว ทำไปก็ไม่คุ้ม", a: "จริงๆ ยิ่งอายุเยอะยิ่งคุ้มครับคุณ... เพราะความเสี่ยงสูงขึ้น แต่เรายังล็อคค่าเบี้ยในราคาพิเศษให้ได้อยู่ถ้าเริ่มตอนนี้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q13/Sornkornchon_P1_P1Q13_1763382417117.webm" },
-            { id: 14, part: 1, q: "คุยกับเจ้าอื่นไปแล้ว", a: "ดีครับคุณ... จะได้มีตัวเปรียบเทียบ แต่ผมมั่นใจว่าจุดเด่นที่ผมกำลังจะบอก คุณ... จะไม่ได้รับจากที่อื่นแน่นอนครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q14/Sornkornchon_P1_P1Q14_1763382417117.webm" },
-            { id: 15, part: 1, q: "ประกันทางโทรศัพท์เชื่อถือได้เหรอ?", a: "เชื่อถือได้แน่นอนครับ ทุกการสนทนาถูกบันทึกไว้เป็นหลักฐาน และมีกรมธรรม์ตัวจริงส่งให้คุณ... ตรวจสอบก่อนเสมอครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q15/Sornkornchon_P1_P1Q15_1763382417117.webm" },
-            { id: 16, part: 1, q: "ขอนัดเจอตัวจริงได้ไหม ไม่ชอบคุยโทรศัพท์", a: "เนื่องจากเป็นโครงการพิเศษทางโทรศัพท์ เราจึงมอบเบี้ยที่ถูกกว่าการขายผ่านช่องทางอื่นได้ครับคุณ... ลองฟังข้อมูลเบื้องต้นดูก่อนนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q16/Sornkornchon_P1_P1Q16_1763382417117.webm" },
-            { id: 17, part: 1, q: "ถามคำถามเยอะจัง น่ารำคาญ", a: "ขออภัยครับคุณ... ที่ต้องถามเพื่อรักษาผลประโยชน์ของท่านเอง ให้แผนประกันตรงกับความต้องการของคุณ... ที่สุดครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q17/Sornkornchon_P1_P1Q17_1763382417117.webm" },
-            { id: 18, part: 1, q: "มีลูกเป็นตัวแทนประกันอยู่แล้ว", a: "ดีเลยครับคุณ... ให้ลูกดูแลส่วนหลัก ส่วนของผมเอาไว้เป็นส่วนเสริมสวัสดิการอีกชั้นหนึ่ง เพื่อความอุ่นใจที่มากขึ้นครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q18/Sornkornchon_P1_P1Q18_1763382417117.webm" },
-            { id: 19, part: 1, q: "ช่วงนี้ตกงานอยู่ ไม่มีเงินทำหรอก", a: "เข้าใจครับคุณ... แผนนี้เรามีแบบออมทรัพย์ที่อาจจะช่วยเป็นเงินสำรองให้คุณ... ในอนาคตได้ด้วย ลองฟังดูเป็นทางเลือกนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q19/Sornkornchon_P1_P1Q19_1763382417117.webm" },
-            { id: 20, part: 1, q: "ใกล้จะเกษียณแล้ว คงไม่จำเป็น", a: "วัยเกษียณคือวัยที่ต้องการความคุ้มครองสุขภาพมากที่สุดครับคุณ... เพื่อไม่ให้เงินเก็บทั้งชีวิตต้องหมดไปกับค่ารักษาพยาบาลครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q20/Sornkornchon_P1_P1Q20_1763382417117.webm" },
-            { id: 21, part: 1, q: "เคยทำแล้วยกเลิกไปแล้ว", a: "อาจเพราะแผนเก่าไม่ตอบโจทย์ครับคุณ... ลองฟังแผนใหม่ที่ปรับปรุงตามความต้องการของลูกค้าในปัจจุบันดูสักนิดนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q21/Sornkornchon_P1_P1Q21_1763382417117.webm" },
-            { id: 22, part: 1, q: "ไม่ชอบทำประกันแบบหักผ่านบัตร", a: "การหักผ่านบัตรช่วยให้ความคุ้มครองต่อเนื่องครับคุณ... แต่เราก็มีช่องทางอื่นในการชำระเงินเพื่อความสะดวกของคุณ... ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q22/Sornkornchon_P1_P1Q22_1763382417117.webm" },
-            { id: 23, part: 1, q: "เดี๋ยวโทรกลับเองนะ", a: "เนื่องจากเบอร์โทรออกเป็นระบบอัตโนมัติ คุณ... อาจจะโทรกลับมาไม่ติดสายเดิม เพื่อไม่ให้เสียสิทธิ ผมขอแจ้งข้อมูลจบใน 1 นาทีนี้เลยนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q23/Sornkornchon_P1_P1Q23_1763382417117.webm" },
-            { id: 24, part: 1, q: "คุ้มครองอะไรบ้าง พูดมาเลยเร็วๆ", a: "ได้ครับคุณ... หลักๆ คือคุ้มครองค่ารักษาพยาบาล อุบัติเหตุ และมีเงินชดเชยรายวันให้ด้วยครับ เดี๋ยวผมลงรายละเอียดแต่ละส่วนนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q24/Sornkornchon_P1_P1Q24_1763382417117.webm" },
-            { id: 25, part: 1, q: "ต้องตรวจสุขภาพไหม?", a: "แผนนี้ส่วนใหญ่ไม่ต้องตรวจสุขภาพครับคุณ... เพียงแค่ตอบคำถามสุขภาพตามความเป็นจริงก็สมัครได้เลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q25/Sornkornchon_P1_P1Q25_1763382417117.webm" },
-            { id: 26, part: 1, q: "ถ้าทำแล้วเสียชีวิต ได้เงินเท่าไหร่?", a: "มีทุนประกันชีวิตมอบให้ครอบครัวแน่นอนครับคุณ... เพื่อเป็นมรดกและความมั่นคงให้กับคนที่ท่านห่วงใยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q26/Sornkornchon_P1_P1Q26_1763382417117.webm" },
-            { id: 27, part: 1, q: "ค่าเบี้ยจะเพิ่มขึ้นทุกปีไหม?", a: "เบี้ยประกันสุขภาพมักจะปรับตามช่วงอายุครับคุณ... แต่การเริ่มตอนนี้จะได้รับสิทธิประโยชน์ที่คุ้มค่ากว่าเริ่มตอนอายุมากขึ้นครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q27/Sornkornchon_P1_P1Q27_1763382417117.webm" },
-            { id: 28, part: 1, q: "มีโรคประจำตัวสมัครได้จริงเหรอ?", a: "สมัครได้ครับคุณ... แต่ต้องแถลงข้อมูลตามจริง เดี๋ยวผมช่วยเช็คเงื่อนไขให้ครับว่าโรคที่เป็นอยู่ครอบคลุมในส่วนไหนบ้าง", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q28/Sornkornchon_P1_P1Q28_1763382417117.webm" },
-            { id: 29, part: 1, q: "มีระยะเวลารอคอยนานแค่ไหน?", a: "โดยปกติอุบัติเหตุคุ้มครองทันที ส่วนโรคทั่วไปจะมีระยะเวลารอคอยตามมาตรฐาน 30 วันครับคุณ...", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q29/Sornkornchon_P1_P1Q29_1763382417117.webm" },
-            { id: 30, part: 1, q: "สุดท้ายก็เหมือนๆ กันทุกบริษัทแหละ", a: "มีความคล้ายกันครับคุณ... แต่จุดที่ทำให้เราแตกต่างคือความรวดเร็วในการเคลมและการดูแลที่ใกล้ชิดครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part1/P1Q30/Sornkornchon_P1_P1Q30_1763384465638.webm" },
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
 
-            // --- PART 2: การจัดการข้อโต้แย้ง/เงื่อนไข (31-60) ---
-            { id: 31, part: 2, q: "เป็นเบาหวานทำได้ไหม?", a: "ทำได้ครับคุณ... แต่เราจะขอข้อมูลเพิ่มเติมเกี่ยวกับระดับน้ำตาล เพื่อส่งพิจารณาให้คุณ... เป็นกรณีพิเศษครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q1/TT_K_P2_P2Q1_1763188237484.webm" },
-            { id: 32, part: 2, q: "เคยผ่าตัดไส้ติ่งมาเมื่อ 2 ปีก่อน", a: "ถ้าหายขาดแล้วไม่มีปัญหาเลยครับคุณ... ถือเป็นประวัติสุขภาพทั่วไปที่แจ้งให้บริษัททราบได้เลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q2/TT_K_P2_P2Q2_1763190362841.webm" },
-            { id: 33, part: 2, q: "ต้องสำรองจ่ายก่อนไหม?", a: "ถ้าเข้าโรงพยาบาลในเครือคู่สัญญา คุณ... ไม่ต้องสำรองจ่ายครับ เพียงยื่นบัตรใบเดียวก็จัดการได้เลย", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q3/TT_K_P2_P2Q3_1763191428994.webm" },
-            { id: 34, part: 2, q: "คุ้มครองค่าห้องวันละเท่าไหร่?", a: "แผนที่คุณ... สนใจ คุ้มครองค่าห้องสูงสุดถึงวันละ 5,000 บาทครับ ครอบคลุมโรงพยาบาลเอกชนชั้นนำได้สบายครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q4/TT_K_P2_P2Q4_1763231134399.webm" },
-            { id: 35, part: 2, q: "รวมค่าล้างไตด้วยไหม?", a: "มีบางแผนที่ครอบคลุมโรคร้ายแรงรวมถึงการล้างไตด้วยครับคุณ... เดี๋ยวผมเช็ครายละเอียดในเล่มกรมธรรม์ให้คุณ... อีกครั้งครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q5/TT_K_P2_P2Q5_1763231416734.webm" },
-            { id: 36, part: 2, q: "ถ้าเกิดอุบัติเหตุในต่างประเทศเคลมได้ไหม?", a: "คุ้มครองทั่วโลกในกรณีอุบัติเหตุฉุกเฉินครับคุณ... สามารถนำใบเสร็จมาเบิกคืนตามวงเงินได้เลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q6/TT_K_P2_P2Q6_1763231569169.webm" },
-            { id: 37, part: 2, q: "ต้องนอนโรงพยาบาลกี่ชั่วโมงถึงจะเบิกได้?", a: "โดยปกติคือ 6 ชั่วโมงขึ้นไปในฐานะผู้ป่วยในครับคุณ... แต่ถ้าเป็นอุบัติเหตุฉุกเฉิน ไม่ต้องนอนก็เบิกค่ารักษาได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q7/TT_K_P2_P2Q7_1763231654753.webm" },
-            { id: 38, part: 2, q: "เบิกค่าชดเชยรายวันได้สูงสุดกี่วัน?", a: "เบิกได้สูงสุดถึง 365 วันต่อการเจ็บป่วยครั้งนั้นๆ เลยครับคุณ... ช่วยให้คุณ... ไม่ต้องกังวลเรื่องขาดรายได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q8/TT_K_P2_P2Q8_1763232152318.webm" },
-            { id: 39, part: 2, q: "คุ้มครองโรคมะเร็งทุกระยะไหม?", a: "แผนโรคร้ายแรงของเราคุ้มครองตั้งแต่ระยะเริ่มต้นไปจนถึงระยะรุนแรงเลยครับคุณลูกค้า", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q9/TT_K_P2_P2Q9_1763231884353.webm" },
-            { id: 40, part: 2, q: "ถ้าลาออกจากงาน ประกันนี้ยังอยู่ไหม?", a: "อยู่ครับคุณ... เพราะเป็นประกันส่วนบุคคล ไม่ได้ผูกติดกับสวัสดิการบริษัท คุณ... สามารถถือความคุ้มครองนี้ได้ตลอดครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q10/TT_K_P2_P2Q10_1763232367832.webm" },
-            { id: 41, part: 2, q: "ชำระเบี้ยรายเดือนหรือรายปีดีกว่ากัน?", a: "รายปีมักจะมีส่วนลดให้ครับคุณ... แต่รายเดือนจะช่วยให้คุณ... บริหารเงินคล่องตัวกว่า คุณ... สะดวกแบบไหนมากกว่าครับ?", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q11/TT_K_P2_P2Q11_1763191824919.webm" },
-            { id: 42, part: 2, q: "ถ้าจ่ายเบี้ยไม่ไหว ขอลดวงเงินได้ไหม?", a: "ได้ครับคุณ... ในอนาคตสามารถขอปรับลดแผนเพื่อให้สอดคล้องกับงบประมาณที่มีได้เสมอครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q12/TT_K_P2_P2Q12_1763191914242.webm" },
-            { id: 43, part: 2, q: "กรมธรรม์ส่งมาที่บ้านภายในกี่วัน?", a: "ภายใน 7-15 วันทำการหลังจากอนุมัติครับ คุณ... จะได้รับเล่มกรมธรรม์ตัวจริงไปตรวจสอบครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q13/TT_K_P2_P2Q13_1763192130890.webm" },
-            { id: 44, part: 2, q: "ถ้าข้อมูลในกรมธรรม์ผิด ต้องทำยังไง?", a: "คุณ... สามารถแจ้งขอแก้ไขได้ทันทีครับ เรามีเจ้าหน้าที่ดูแลประสานงานให้ฟรีไม่มีค่าใช้จ่ายครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q14/TT_K_P2_P2Q14_1763192288238.webm" },
-            { id: 45, part: 2, q: "มีค่ารักษาพยาบาลแบบผู้ป่วยนอก (OPD) ไหม?", a: "มีครับคุณ... สำหรับแผนที่รวม OPD คุณ... สามารถหาหมอรับยาแล้วกลับบ้านได้เลยโดยไม่ต้องนอนโรงพยาบาลครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q15/TT_K_P2_P2Q15_1763192435378.webm" },
-            { id: 46, part: 2, q: "ตรวจเจอว่าเป็นโรคหลังจากทำประกัน เคลมได้ไหม?", a: "ถ้าพ้นระยะเวลารอคอยแล้ว และตรวจเจอภายหลัง เคลมได้แน่นอน 100% ครับคุณ...", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q16/TT_K_P2_P2Q16_1763192672186.webm" },
-            { id: 47, part: 2, q: "ถ้าเป็นโควิด-19 คุ้มครองไหม?", a: "คุ้มครองครับคุณ... ทั้งค่ารักษาพยาบาลและค่าชดเชยรายวันตามเงื่อนไขของผู้ป่วยในครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q17/TT_K_P2_P2Q17_1763232779144.webm" },
-            { id: 48, part: 2, q: "ครอบคลุมการรักษาทางเลือกอย่างฝังเข็มไหม?", a: "แผนส่วนใหญ่จะเน้นการรักษาแผนปัจจุบันครับ แต่บางแผนพิเศษอาจจะครอบคลุม เดี๋ยวผมตรวจสอบให้คุณ... ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q18/TT_K_P2_P2Q18_1763232939054.webm" },
-            { id: 49, part: 2, q: "สมัครให้คนอื่นได้ไหม เช่น พ่อแม่?", a: "ได้ครับคุณ... คุณ... สามารถเป็นผู้ชำระเบี้ยให้กับบุคคลในครอบครัวได้ เพื่อมอบความมั่นคงให้พวกท่านครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q19/TT_K_P2_P2Q19_1763233003764.webm" },
-            { id: 50, part: 2, q: "เงินชดเชยรายวันโอนเข้าบัญชีภายในกี่วัน?", a: "หลังจากยื่นเอกสารครบถ้วน จะดำเนินการโอนเข้าบัญชีคุณ... ภายใน 7 วันทำการครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part2/P2Q21/TT_K_P2_P2Q21_1763233404680.webm" },
-            { id: 51, part: 2, q: "ชำระเบี้ยรายเดือนหรือรายปีดีกว่ากัน?", a: "รายปีจะมีส่วนลด7-8%ให้ครับ แต่รายเดือนจะช่วยให้บริหารเงินคล่องตัวกว่า คุณลูกค้า สะดวกแบบไหนมากกว่าครับ?", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_41.wav" },
-            { id: 52, part: 2, q: "ถ้าจ่ายเบี้ยไม่ไหว ขอลดวงเงินได้ไหม?", a: "จริงๆก็สามารถทำได้อาจจะปรับจากรายปีเป็นรายเดือน หากสะดวกขึ้นแล้วในปีถัดไปก็สามารถแจ้งปรับเบี้ยเป็นรายปีตามปกติได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_42.wav" },
-            { id: 53, part: 2, q: "IRR โครงการนี้เท่าไหร่ ?", a: "ทางโครงการไม่ได้คิดเรท IRR ไว้ครับ ก็ต้องยอมรับก่อนครับว่าการทำประกันชีวิตจะเปรียบเทียบกับผลตอบแทนการลงทุนไม่ได้ครับ แต่จะให้ความมั่นคงและอุ่นใจมากกว่าไม่ว่าอยู่หรือจากไปครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_43.wav" },
-            { id: 54, part: 2, q: "ส่งเบี้ยไม่ไหวยกเลิกได้ใช่ไหม ต้องทำยังไง?", a: "ประกันชีวิตสะสมทรัพย์เป็นการชำระเบี้ยตามระยะเวลาที่กำหนดและจะได้ผลตอบแทนตามเงื่อนไข แต่เกิดกรณีส่งเบี้ยไม่ไหวยกเลิกก่อนจะทำให้ได้รับเงินคืนไม่ครบตามเงื่อนไขจะได้เฉพาะมูลค่าเวนคืนกรมธรรม์ในปีนั้นๆ คืนเท่านั้นครับ หากอนาคตส่งเบี้ยไม่ไหวโทรปรึกษาได้ที่ 1621 นะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_44.wav" },
-            { id: 55, part: 2, q: "ถ้าไม่รับเงินคืนต่อปีที่โครงการคืนให้สามารถฝากไว้ได้ไหม?", a: "อันนี้แนะนำให้รับคืนไปทำประโยชน์ดีว่าครับเพราะฝากไว้ก็ไม่ได้อะไรเพิ่มเอาไปชำระเบี้ยปีต่อก้ได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_45.wav" },
-            { id: 56, part: 2, q: "เบี้ยลดหย่อนภาษีได้ไหม?", a: "หากภาษีแสนแรกยังไม่เต็ม ลูกค้าสามารถนำเบี้ยไปลดหย่อนภาษีได้ตามที่จ่ายจริงสูงสุดไม่เกิน 100,000 บาท ลูกค้าประสงค์จะนำเบี้ยไปลดหย่อนภาษีใช่ไหมเดี๋ยวผมจัดการให้เลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_46.wav" },
-            { id: 57, part: 2, q: "ส่งเบี้ยมาจนเบี้ยมากกว่าทุนหากสูญเสียชีวิตก็ไม่คุ้มค่า?", a: "จริงๆ เรื่องนี้ไม่ต้องกังวลครับ เพราะโครงการนี้ไม่เอาเปรียบลูกค้าแน่นอน เมื่อไหร่ก็ตามที่เบี้ยหรือมูลค่าในกรมธรรม์มากว่าทุน ทางโครงการจะจ่ายจำนวนที่มากว่าเสมอให้กับผู้รับประโยชน์ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_47.wav" },
-            { id: 58, part: 2, q: "ต้องมีเงินนอนนิ่งไว้ถึงจะทำได้เพราะเวลาต้องการใช้เงินมันเอาออกมาไช้ไม่ได้?", a: "อธิบายอย่างนี้นะครับ ถ้ามีความจำเป็นต้องใช้เงินเร่งด่วนสามารถนำกรมธรรม์มาเป็นหลักประกันเพื่อกู้เงินจากบริษัทไปใช้ก่อนได้ อาจจะได้ที่ 90 % ของมูลค่ากรมธรรม์นะครับ มีดอกเบี้ยน้อยมากไม่เกิน 8 % ต่อปีเท่าน้ั้น ที่สำคัญความคุ้มครองยังอยู่เงินคืนก็ไยังได้คืนปกติครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_48.wav" },
-            { id: 59, part: 2, q: "ต้องจ่ายเบี้ยเมื่อไหร่?", a: "ภายหลังที่ลูกค้าสมัคร ผ่านการพิจารณาจะมีการเรียกเก็บเบี้ยเข้าไป ลูกค้าสามารถจ่ายตามรอบบัญชีได้เลย", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_49.wav" },
-            { id: 60, part: 2, q: "มีข้อยกเว้นอะไรบ้าง?", a: "ข้อยกเว้นทั่วไป ห้ามฆ่าตัวตายปีแรกห้ามถูกผู้รับประโยชน์ฆ่าตายโดยเจตนา และ สำหรับข้อยกเว้นอุบัติเหตุ ไม่คุ้มครองการขับขี่โดยสาร รถจักยานยนต์ หรือมีแอลกอฮอลในเลือดมากกว่า150 มิลิกรัม%ขึ้นไปครับ ลูกค้าสามารถศึกษารายละเอียดทั้งหมดได้ที่กรมธรรม์นะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_50.wav" },
+        const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno';
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
-            // --- PART 3: การปิดการขาย (61-90) ---
-            { id: 61, part: 3, q: "ยังก่อนดีกว่า,ขอคิดดูก่อน", a: "ครับฟังรายละเอียดตัวโครงการแล้วคิดเห็นยังไงบ้างครับ ดีใช่มั้ยครับ ผมถามนิดนึง เบี้ยประกันที่ผมแจ้งมีผลต่อการตัดสินใจไหมครับ ถ้ามีเดี๋ยวผมดูเบี้ยที่เหมาะสมกว่านี้ให้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_1.wav" },
-            { id: 62, part: 3, q: "เดี๋ยวติดต่อกลับ", a: "ยินดีครับคุณสมชาย แต่ส่วนใหญ่พอวางสายไปแล้วมักจะยุ่งจนลืม คุณสมชายสงสัยตรงไหนไหมครับ ผมอธิบายให้เคลียร์ตอนนี้เลยอย่างที่แจ้งครับถ้าหากกลับไปคิดก็อาจจะลืมรายละเอียดไปและอาจทำให้พลาดโอกาสที่จะตอบรับโครงการดีๆไปนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_2.wav" },
-            { id: 63, part: 3, q: "ส่งเอกสารมาให้อ่านก่อนค่อยสมัคร", a: "อย่างที่เรียนแจ้ง ตั้งแต่ต้นสายครับ เนื่องจากเป็นโครงการพิเศษ ที่ให้เจ้าหน้าที่เฉพาะด้านโทรมา นำเสนอข้อมูลไม่มีเอกสารที่เป็นโบชัวร์จัดส่งให้ แต่หากลูกค้าฟังข้อมูลส่วนใดไม่ชัดเจนสอบถามเพิ่มเติมได้เลยนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_3.wav" },
-            { id: 64, part: 3, q: "เดี๋ยวถามที่บ้านก่อน ถ้าเขาโอเคจะโทรกลับ", a: "จริงๆแล้ว คุณสมชาย สามารถพิจารณาไปด้วยกันได้นะครับ หากฟังโครงการแล้วชอบเบี้ยประกันไม่มีผลกระทบกับค่าใช้ช่าย แจ้งเป็นข่าวดีให้คนในบ้านทราบได้เลยว่าคุณ... ได้เตรียมสวัสดิการที่ดีไว้ให้ครอบครัวแล้ว", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_4.wav" },
-            { id: 65, part: 3, q: "ปีหน้าค่อยทำละกัน", a: "ปีหน้าเบี้ยจะมีการปรับเพิ่มขึ้นตามอายุของเราที่เพิ่มขึ้นและเราไม่รู้ว่าสุขภาพจะเป็นอย่างไร การทำตอนนี้คือการตัดสินใจที่ดีที่สุด ที่คุณสมชายทำเพื่อครอบครัวและตัวเองครับ เรียนเชิญไว้ด้วยกันเลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_5.wav" },
-            { id: 66, part: 3, q: "ขอเปรียบเทียบกับเจ้าอื่นก่อนนะ", a: "การเปรียบเทียบเป็นเรื่องดีครับ แต่แผนนี้เป็นโควต้าพิเศษสำหรับคุณ... ตอนนี้เท่านั้น คุณ... อาจจะหาจากที่อื่นไม่ได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_6.wav" },
-            { id: 67, part: 3, q: "ไม่มีบัตรเครดิต ทำได้ไหม?", a: "ถ้าไม่มีบัตรเครดิตจะยังไม่สามารถเข้าร่วมโครงการได้ครับ ต้องขอโทษด้วยครับ แต่ถ้าหากคนในครอบครัว ของลูกค้ามีบัตรเครดิต ก็สามารถชำระเบี้ยประกันให้กับลูกค้าได้นะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_7.wav" },
-            { id: 68, part: 3, q: "ทำไมต้องตัดสินใจตอนนี้เลย?", a: "เพราะสุขภาพและความเสี่ยงรอไม่ได้นะครับ เพราะฉนั้น การตอบรับสิทธิ์ตอนที่ร่างกายยังแข็งแรงคือจังหวะที่ดีที่สุดครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_8.wav" },
-            { id: 69, part: 3, q: "เบี้ยแพงไปหน่อย ลดกว่านี้ได้ไหม?", a: "จริงๆถ้ามองจากผลประโยชน์ที่ได้รับก็ถือว่าคุ้มค่านะครับ แต่เพื่อให้เหมาะสมกับลูกค้าและไม่หนักเกินไปเดี๋ยวผมลองปรับแผนให้ครับ เบี้ยลดลงแน่นอนแต่ความคุ้มครองยังคุ้มค่าเหมือนเดิมครับ หากเป็นเรทนี้ ลูกค้าสะดวกขึ้นนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_9.wav" },
-            { id: 70, part: 3, q: "กลัวโดนหลอก ไม่กล้าทำทางโทรศัพท์", a: "เข้าใจครับคุณสมชาย หากไม่มั่นใจ คุณสมชาย สามารถจดชื่อและเลขที่ใบอนุญาตของผมไปเช็คกับ คปภ.ได้ทันทีเพื่อความสบายใจครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/E%20testing%20voice/2_10.wav" },
-            { id: 71, part: 3, q: "แฟนไม่ให้ทำแน่ๆ เลย", a: "ลองคุยกันดูครับคุณ... แต่ถ้าบอกว่าคุณ... ทำเพื่อลดภาระค่าใช้จ่ายของครอบครัว ผมเชื่อว่าทางครอบครัวคุณ... ต้องเห็นด้วยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q11/Sornkornchon_P3_P3Q11_1763385056099.webm" },
-            { id: 72, part: 3, q: "เคยทำแล้วเคลมไม่ได้ เลยไม่อยากทำอีก", a: "นั่นเป็นเหตุผลที่ผมต้องเน้นถามคำถามสุขภาพให้ชัดเจนวันนี้ เพื่อให้ตอนคุณ... เคลมจะไม่มีปัญหาเหมือนครั้งก่อนครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q12/Sornkornchon_P3_P3Q12_1763385056099.webm" },
-            { id: 73, part: 3, q: "ยังแข็งแรงดีอยู่ ไม่จำเป็นต้องใช้", a: "ประกันทำตอนแข็งแรงดีที่สุดครับคุณ... เพราะถ้าเจ็บป่วยแล้วจะทำไม่ได้เลย ถึงตอนนั้นจำเป็นแค่ไหนเงินก็ซื้อไม่ได้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q13/Sornkornchon_P3_P3Q13_1763385056099.webm" },
-            { id: 74, part: 3, q: "ขอเอกสารมาอ่านก่อนค่อยสมัคร", a: "ในระบบโทรศัพท์เราจะส่งเล่มจริงให้คุณ... อ่านหลังสมัครครับ คุณ... มีสิทธิยกเลิกและรับเงินคืนได้ใน 15 วันถ้าไม่พอใจครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q14/Sornkornchon_P3_P3Q14_1763385056099.webm" },
-            { id: 75, part: 3, q: "เบี้ยจ่ายทิ้งเปล่าๆ เสียดายตังค์", a: "เหมือนการซื้อความอุ่นใจครับคุณ... จ่ายน้อยเพื่อป้องกันความเสี่ยงที่อาจต้องจ่ายมหาศาลในอนาคตครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q15/Sornkornchon_P3_P3Q15_1763385056099.webm" },
-            { id: 76, part: 3, q: "ไม่มีบัตรเครดิต ทำได้ไหม?", a: "ทำได้ครับคุณ... สามารถชำระผ่านแอปธนาคารหรือเคาน์เตอร์เซอร์วิสได้ สะดวกมากครับสำหรับคุณลูกค้า", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q16/Sornkornchon_P3_P3Q16_1763385056099.webm" },
-            { id: 77, part: 3, q: "กลัวบริษัทล้มละลายแล้วไม่ได้เงิน", a: "เราเป็นบริษัทใหญ่ที่มีเงินกองทุนสำรองตามกฎหมาย คปภ. ควบคุมเคร่งครัดมาก คุณ... มั่นใจได้ 100% ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q17/Sornkornchon_P3_P3Q17_1763385056099.webm" },
-            { id: 78, part: 3, q: "คุยนานแล้วนะ สรุปเบี้ยเท่าไหร่กันแน่?", a: "เบี้ยสำหรับคุณ... อยู่ที่เดือนละ XXX บาทครับ ซึ่งถือว่าคุ้มค่ามากเมื่อเทียบกับวงเงินรักษาที่คุณ... จะได้รับครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q18/Sornkornchon_P3_P3Q18_1763385056099.webm" },
-            { id: 79, part: 3, q: "ถ้าคุ้มครองดีจริง ทำไมต้องโทรมาขาย?", a: "เพราะเราต้องการเข้าถึงลูกค้าโดยตรงเพื่อมอบสิทธิประโยชน์กลับคืนให้คุณ... ได้มากกว่าช่องทางอื่นครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q19/Sornkornchon_P3_P3Q19_1763385056099.webm" },
-            { id: 80, part: 3, q: "เอาเบอร์มาจากไหน บอกมาสิ?", a: "เราเป็นพันธมิตรกับสถาบันการเงินที่คุณ... ใช้งานอยู่ครับ จึงได้รับสิทธิในการมอบโครงการพิเศษนี้ให้คุณ... ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q20/Sornkornchon_P3_P3Q20_1763385056099.webm" },
-            { id: 81, part: 3, q: "ถ้าผมทำแล้ว คุณจะได้อะไร?", a: "ผมได้ความภูมิใจที่ได้มอบความคุ้มครองที่ดีให้กับคุณ... ครับ และหน้าที่ของผมคือดูแลคุณ... ให้ดีที่สุดครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q21/Sornkornchon_P3_P3Q21_1763385056099.webm" },
-            { id: 82, part: 3, q: "มีคนโทรมาเยอะมาก เลือกไม่ถูก", a: "พิจารณาที่ความคุ้มครองและความน่าเชื่อถือครับคุณ... ซึ่งแผนที่เสนอวันนี้ตอบโจทย์ทั้งสองอย่างเพื่อคุณ... ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q22/Sornkornchon_P3_P3Q22_1763385056099.webm" },
-            { id: 83, part: 3, q: "ประกันแบบนี้เคลมยากกว่าปกติไหม?", a: "ไม่เลยครับ มาตรฐานการเคลมเหมือนกันทุกช่องทาง และปัจจุบันเรามีระบบออนไลน์ที่สะดวกสำหรับคุณ... มากครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q23/Sornkornchon_P3_P3Q23_1763385056099.webm" },
-            { id: 84, part: 3, q: "ขอปรึกษาหมอก่อนว่าต้องทำไหม", a: "แพทย์คงแนะนำให้ทำแน่นอนครับคุณ... เพราะท่านเห็นคนไข้ที่ต้องลำบากเพราะไม่มีประกันมาเยอะแล้วครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q24/Sornkornchon_P3_P3Q24_1763385056099.webm" },
-            { id: 85, part: 3, q: "สมัครแล้วคุ้มครองกี่ปี?", a: "คุ้มครองแบบปีต่อปี และคุณ... สามารถต่ออายุได้ยาวนานจนถึงอายุ 80 ปีเลยครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q25/Sornkornchon_P3_P3Q25_1763385056099.webm" },
-            { id: 86, part: 3, q: "ถ้าผมเปลี่ยนเบอร์โทรศัพท์ จะทำยังไง?", a: "คุณ... สามารถแจ้งผ่าน Call Center หรือแอปฯ ของบริษัทได้ตลอด 24 ชั่วโมงเพื่ออัปเดตข้อมูลครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q26/Sornkornchon_P3_P3Q26_1763385056099.webm" },
-            { id: 87, part: 3, q: "ต้องจ่ายเงินงวดแรกตอนไหน?", a: "หลังจากคุณ... ตกลงยืนยันข้อมูล ระบบจะดำเนินการตามรอบที่คุณ... สะดวกแจ้งไว้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q27/Sornkornchon_P3_P3Q27_1763385056099.webm" },
-            { id: 88, part: 3, q: "พูดยังไงก็ไม่อยากทำ", a: "รับทราบครับคุณ... แต่อยากให้ท่านเก็บข้อมูลนี้ไว้ก่อน เผื่อในอนาคตคุณ... ต้องการความคุ้มครอง ผมยินดีรับใช้ครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q28/Sornkornchon_P3_P3Q28_1763385056099.webm" },
-            { id: 89, part: 3, q: "เดี๋ยวถามที่บ้านก่อน ถ้าเขาโอเคจะโทรกลับ", a: "คุณ... สามารถแจ้งเป็นข่าวดีให้คนในบ้านทราบได้นะครับ ว่าคุณ... ได้เตรียมสวัสดิการที่ดีไว้ให้ครอบครัวแล้ว", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q29/Sornkornchon_P3_P3Q29_1763385056099.webm" },
-            { id: 90, part: 3, q: "โอเค ตกลงทำครับ ต้องทำยังไงบ้าง?", a: "ยินดีด้วยครับคุณ... เป็นการตัดสินใจที่ยอดเยี่ยมมาก เดี๋ยวผมขออนุญาตบันทึกเสียงเพื่อยืนยันสิทธิและรักษาสิทธิประโยชน์ให้คุณลูกค้าตามขั้นตอนนะครับ", audioUrl: "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/part3/P3Q30/TT_K_P3_P3Q30_1763233856279.webm" }
+        let audioBlobs = { part1: {}, part2: {}, part3: {} }; 
+        let mediaRecorder;
+        let audioChunks = [];
+        let currentPart = 'part1'; 
+        let shuffledQuestions = []; 
+        let currentIndex = 0;
+        let currentBlobUrl = null; 
+
+        const tsrGroups = [
+            { id: 0, name_th: "Trainer Group (ฝึกซ้อม)", name_en: "Trainer Group", description: "ใช้สำหรับการฝึกซ้อมของเทรนเนอร์หรือผู้ประเมิน" },
+            { id: 1, name_th: "พนักงานกลุ่มเนอสเซอรี่", name_en: "Nursery Group", description: "พนักงานใหม่ที่อยู่ระหว่างการฝึกอบรมเบื้องต้น" },
+            { id: 2, name_th: "New TSRs On boarding Group", name_en: "New TSRs Onboarding", description: "พนักงานใหม่ที่อยู่ระหว่างการเริ่มงานและฝึกปฏิบัติ" },
+            { id: 3, name_th: "New TSRs", name_en: "New TSRs", description: "พนักงานใหม่ที่ผ่านช่วง Onboarding แล้ว" },
+            { id: 4, name_th: "Existing TSRs", name_en: "Existing TSRs", description: "พนักงานที่มีประสบการณ์แล้ว" }
         ];
-        
-        // ใช้ scripts ถ้ามีข้อมูล ถ้าไม่มีใช้ demoData (กัน Error)
-        const activeScripts = (scripts.length > 1) ? scripts : demoData;
+        let selectedTsrGroup = null; 
+        let currentUserId = null; 
+        const USER_ID_KEY = 'voice_hd_user_id_agent';
 
-        // --- Functions ---
+        const inputUserName = document.getElementById('inputUserName');
+        const mainAlert = document.getElementById('mainAlert');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const startRecBtn = document.getElementById('startRecBtn');
+        const stopRecBtn = document.getElementById('stopRecBtn');
+        const playbackAudio = document.getElementById('playbackAudio');
+        const questionList = document.getElementById('questionList');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const submitBtn = document.getElementById('submitBtn'); 
+        const questionPrompt = document.getElementById('questionPrompt');
+        const requiredAnswer = document.getElementById('requiredAnswer');
+        const sendQuestionBtn = document.getElementById('sendQuestionBtn'); 
+
+        const questions = {
+            part1: [
+                { id: 1, part: 1, q: "ไม่ว่างครับ กำลังยุ่งอยู่เลย", a: "ขออภัยที่รบกวนเวลาครับคุณ... ผมใช้เวลาไม่ถึง 1 นาทีแจ้งสิทธิประโยชน์สั้นๆ ไว้ก่อน แล้วค่อยนัดเวลาที่คุณ... สะดวกคุยอีกครั้งได้ไหมครับ?" },
+                { id: 2, part: 1, q: "มีประกันเยอะแล้วครับ ไม่เอาเพิ่มแล้ว", a: "ดีเลยครับคุณ... แสดงว่าคุณ... วางแผนมาดีมาก โครงการนี้จะเข้ามาเสริมในส่วนที่ประกันเดิมอาจจะยังไม่ครอบคลุม ลองฟังดูเป็นข้อมูลสั้นๆ นะครับ" },
+                { id: 3, part: 1, q: "ไม่สนใจครับ เรื่องประกันน่ารำคาญ", a: "เข้าใจครับคุณ... หลายท่านก็เคยรู้สึกแบบนี้ แต่โครงการนี้เราเน้นช่วยเรื่องค่ารักษาพยาบาลจริงๆ ลองฟังจุดเด่นสัก 30 วินาทีนะครับ" },
+                { id: 4, part: 1, q: "ส่งรายละเอียดเข้า Line มาก่อนได้ไหม?", a: "เนื่องจากว่าโครงการนี้เป็นโคงการพิเศษ ทีจะให้เจ้าหน้าที่โทรมาเรียนแจ้ง กับลูกค้าคนพิเศษโดยตรงจึงไม่ได้มีเอกสารจัดส่งให้ แต่ถ้าหากเกิดข้อสงสัยในข้อมูลตรงไหน ก็สอบถามเจ้าหน้าที่ได้เลยครับ?" },
+                { id: 5, part: 1, q: "กำลังขับรถอยู่ครับ คุยไม่ได้", a: "ขอโทษด้วยครับคุณสมชาย เพื่อความปลอดภัย คุณสมชาย สะดวกใช้สปิคเกอร์โฟนในรถเพื่อรับข้อมูลได้หรือไม่ครับ ถ้าไม่มีเดี๋ยวผมขออนุญาตติดต่อกลับหาคุณสมชาย อีกครั้งในช่วงเวลาที่สะดวกดีไหมครับ?" },
+                { id: 6, part: 1, q: "ไม่มีเงินครับ ช่วงนี้เศรษฐกิจไม่ดี", a: "เข้าใจเลยครับคุณสมชาย แต่โครงการนี้เบี้ยเริ่มต้นแค่วันละไม่กี่สิบบาท ออกแบบมาเพื่อช่วยแบ่งเบาภาระในวันที่เศรษฐกิจไม่ดี โดยเฉพาะครับ คุณสมชาย สามารถเริ่มต้นเก็บออม เบาๆไปก่อน อนาคตค่อยเพิ่มก็ได้ครับ" },
+                { id: 7, part: 1, q: "เบื่อพวกโทรมาขายประกันมาก", a: "ต้องขออภัยจริงๆ ครับคุณสมชาย แต่วันนี้ผมมาในฐานะที่ปรึกษาเพื่อแจ้งสิทธิประโยชน์เฉพาะกลุ่มสมาชิก บัตรเครดิต คุณสมชาย ลองฟังข้อมูลก่อนตัดสินใจสักครู่นะครับ" },
+                { id: 8, part: 1, q: "ขอวางสายเลยนะ ไม่คุย", a: "สักครู่นะครับคุณ... ผมขอเวลาแค่ 15 วินาทีบอกจุดสำคัญที่สุด แล้วถ้าคุณ... ไม่สนใจจริงๆ ผมจะไม่รบกวนต่อเลยครับ" },
+                { id: 9, part: 1, q: "มีสวัสดิการบริษัทดีอยู่แล้ว", a: "เยี่ยมเลยครับคุณสมชาย โครงการนี้จะเข้าไปช่วยจ่ายส่วนเกินที่สวัสดิการบริษัทอาจจะครอบคลุมไม่ถึง เพื่อให้คุณสมชาย ไม่ต้องรับผิดชอบค่าใช้จ่ายเองครับ" },
+                { id: 10, part: 1, q: "ทำไปก็เคลมยาก เคยมีประสบการณ์ไม่ดี", a: "เสียใจที่คุณสมชาย ต้องเจอแบบนั้นครับ แต่ปัจจุบันเรามีระบบการเคลมที่โปร่งใสและรวดเร็วขึ้นมาก อยากให้ลองเปิดใจดูมาตรฐานใหม่ของเราครับซึ่งการเบิกเคลมเป็นเรื่องที่บริษัทเราให้ความสำคัญเป็นเรื่องแรกเพื่อให้ลูกค้าได้มีประสบการที่ดีแล้วบอกต่อครับ" },
+                { id: 11, part: 1, q: "เอาเบอร์มาจากไหน บอกมาสิ?", a: "เราเป็นพันธมิตรกับสถาบันการเงินที่คุณสมชาย ใช้งานอยู่ครับ จึงได้รับสิทธิในการมอบโครงการพิเศษนี้ให้คุณสมชาย ครับ สะดวกรับข้อมูลสักครุ่นะครับ" },
+                { id: 12, part: 1, q: "ทำไมถึงได้เบอร์ผมมา?", a: "เราได้รับสิทธิจากสถาบันการเงินในการแจ้งข้อมูลให้กับกลุ่มลูกค้าที่มีประวัติการชำระดีครับ เพื่อมอบสิทธิพิเศษที่คุณ... ควรได้รับครับ" },
+                { id: 13, part: 1, q: "อายุเยอะแล้ว ทำไปก็ไม่คุ้ม", a: "จริงๆ ยิ่งอายุเยอะยิ่งคุ้มครับคุณ... เพราะความเสี่ยงสูงขึ้น แต่เรายังล็อคค่าเบี้ยในราคาพิเศษให้ได้อยู่ถ้าเริ่มตอนนี้ครับ" },
+                { id: 14, part: 1, q: "คุยกับเจ้าอื่นไปแล้ว", a: "ดีครับคุณ... จะได้มีตัวเปรียบเทียบ แต่ผมมั่นใจว่าจุดเด่นที่ผมกำลังจะบอก คุณ... จะไม่ได้รับจากที่อื่นแน่นอนครับ" },
+                { id: 15, part: 1, q: "ประกันทางโทรศัพท์เชื่อถือได้เหรอ?", a: "เชื่อถือได้แน่นอนครับ ทุกการสนทนาถูกบันทึกไว้เป็นหลักฐาน และมีกรมธรรม์ตัวจริงส่งให้คุณ... ตรวจสอบก่อนเสมอครับ" },
+                { id: 16, part: 1, q: "ขอนัดเจอตัวจริงได้ไหม ไม่ชอบคุยโทรศัพท์", a: "เนื่องจากเป็นโครงการพิเศษทางโทรศัพท์ เราจึงมอบเบี้ยที่ถูกกว่าการขายผ่านช่องทางอื่นได้ครับคุณ... ลองฟังข้อมูลเบื้องต้นดูก่อนนะครับ" },
+                { id: 17, part: 1, q: "ถามคำถามเยอะจัง น่ารำคาญ", a: "ขออภัยครับคุณ... ที่ต้องถามเพื่อรักษาผลประโยชน์ของท่านเอง ให้แผนประกันตรงกับความต้องการของคุณ... ที่สุดครับ" },
+                { id: 18, part: 1, q: "มีลูกเป็นตัวแทนประกันอยู่แล้ว", a: "ดีเลยครับคุณ... ให้ลูกดูแลส่วนหลัก ส่วนของผมเอาไว้เป็นส่วนเสริมสวัสดิการอีกชั้นหนึ่ง เพื่อความอุ่นใจที่มากขึ้นครับ" },
+                { id: 19, part: 1, q: "ช่วงนี้ตกงานอยู่ ไม่มีเงินทำหรอก", a: "เข้าใจครับคุณ... แผนนี้เรามีแบบออมทรัพย์ที่อาจจะช่วยเป็นเงินสำรองให้คุณ... ในอนาคตได้ด้วย ลองฟังดูเป็นทางเลือกนะครับ" },
+                { id: 20, part: 1, q: "ใกล้จะเกษียณแล้ว คงไม่จำเป็น", a: "วัยเกษียณคือวัยที่ต้องการความคุ้มครองสุขภาพมากที่สุดครับคุณ... เพื่อไม่ให้เงินเก็บทั้งชีวิตต้องหมดไปกับค่ารักษาพยาบาลครับ" },
+                { id: 21, part: 1, q: "เคยทำแล้วยกเลิกไปแล้ว", a: "อาจเพราะแผนเก่าไม่ตอบโจทย์ครับคุณ... ลองฟังแผนใหม่ที่ปรับปรุงตามความต้องการของลูกค้าในปัจจุบันดูสักนิดนะครับ" },
+                { id: 22, part: 1, q: "ไม่ชอบทำประกันแบบหักผ่านบัตร", a: "การหักผ่านบัตรช่วยให้ความคุ้มครองต่อเนื่องครับคุณ... แต่เราก็มีช่องทางอื่นในการชำระเงินเพื่อความสะดวกของคุณ... ครับ" },
+                { id: 23, part: 1, q: "เดี๋ยวโทรกลับเองนะ", a: "เนื่องจากเบอร์โทรออกเป็นระบบอัตโนมัติ คุณ... อาจจะโทรกลับมาไม่ติดสายเดิม เพื่อไม่ให้เสียสิทธิ ผมขอแจ้งข้อมูลจบใน 1 นาทีนี้เลยนะครับ" },
+                { id: 24, part: 1, q: "คุ้มครองอะไรบ้าง พูดมาเลยเร็วๆ", a: "ได้ครับคุณ... หลักๆ คือคุ้มครองค่ารักษาพยาบาล อุบัติเหตุ และมีเงินชดเชยรายวันให้ด้วยครับ เดี๋ยวผมลงรายละเอียดแต่ละส่วนนะครับ" },
+                { id: 25, part: 1, q: "ต้องตรวจสุขภาพไหม?", a: "แผนนี้ส่วนใหญ่ไม่ต้องตรวจสุขภาพครับคุณ... เพียงแค่ตอบคำถามสุขภาพตามความเป็นจริงก็สมัครได้เลยครับ" },
+                { id: 26, part: 1, q: "ถ้าทำแล้วเสียชีวิต ได้เงินเท่าไหร่?", a: "มีทุนประกันชีวิตมอบให้ครอบครัวแน่นอนครับคุณ... เพื่อเป็นมรดกและความมั่นคงให้กับคนที่ท่านห่วงใยครับ" },
+                { id: 27, part: 1, q: "ค่าเบี้ยจะเพิ่มขึ้นทุกปีไหม?", a: "เบี้ยประกันสุขภาพมักจะปรับตามช่วงอายุครับคุณ... แต่การเริ่มตอนนี้จะได้รับสิทธิประโยชน์ที่คุ้มค่ากว่าเริ่มตอนอายุมากขึ้นครับ" },
+                { id: 28, part: 1, q: "มีโรคประจำตัวสมัครได้จริงเหรอ?", a: "สมัครได้ครับคุณ... แต่ต้องแถลงข้อมูลตามจริง เดี๋ยวผมช่วยเช็คเงื่อนไขให้ครับว่าโรคที่เป็นอยู่ครอบคลุมในส่วนไหนบ้าง" },
+                { id: 29, part: 1, q: "มีระยะเวลารอคอยนานแค่ไหน?", a: "โดยปกติอุบัติเหตุคุ้มครองทันที ส่วนโรคทั่วไปจะมีระยะเวลารอคอยตามมาตรฐาน 30 วันครับคุณ..." },
+                { id: 30, part: 1, q: "สุดท้ายก็เหมือนๆ กันทุกบริษัทแหละ", a: "มีความคล้ายกันครับคุณ... แต่จุดที่ทำให้เราแตกต่างคือความรวดเร็วในการเคลมและการดูแลที่ใกล้ชิดครับ" }
+            ],
+            part2: [              
+                { id: 31, part: 2, q: "เป็นเบาหวานทำได้ไหม?", a: "ทำได้ครับคุณ... แต่เราจะขอข้อมูลเพิ่มเติมเกี่ยวกับระดับน้ำตาล เพื่อส่งพิจารณาให้คุณ... เป็นกรณีพิเศษครับ" },
+                { id: 32, part: 2, q: "เคยผ่าตัดไส้ติ่งมาเมื่อ 2 ปีก่อน", a: "ถ้าหายขาดแล้วไม่มีปัญหาเลยครับคุณ... ถือเป็นประวัติสุขภาพทั่วไปที่แจ้งให้บริษัททราบได้เลยครับ" },
+                { id: 33, part: 2, q: "ต้องสำรองจ่ายก่อนไหม?", a: "ถ้าเข้าโรงพยาบาลในเครือคู่สัญญา คุณ... ไม่ต้องสำรองจ่ายครับ เพียงยื่นบัตรใบเดียวก็จัดการได้เลย" },
+                { id: 34, part: 2, q: "คุ้มครองค่าห้องวันละเท่าไหร่?", a: "แผนที่คุณ... สนใจ คุ้มครองค่าห้องสูงสุดถึงวันละ 5,000 บาทครับ ครอบคลุมโรงพยาบาลเอกชนชั้นนำได้สบายครับ" },
+                { id: 35, part: 2, q: "รวมค่าล้างไตด้วยไหม?", a: "มีบางแผนที่ครอบคลุมโรคร้ายแรงรวมถึงการล้างไตด้วยครับคุณ... เดี๋ยวผมเช็ครายละเอียดในเล่มกรมธรรม์ให้คุณ... อีกครั้งครับ" },
+                { id: 36, part: 2, q: "ถ้าเกิดอุบัติเหตุในต่างประเทศเคลมได้ไหม?", a: "คุ้มครองทั่วโลกในกรณีอุบัติเหตุฉุกเฉินครับคุณ... สามารถนำใบเสร็จมาเบิกคืนตามวงเงินได้เลยครับ" },
+                { id: 37, part: 2, q: "ต้องนอนโรงพยาบาลกี่ชั่วโมงถึงจะเบิกได้?", a: "โดยปกติคือ 6 ชั่วโมงขึ้นไปในฐานะผู้ป่วยในครับคุณ... แต่ถ้าเป็นอุบัติเหตุฉุกเฉิน ไม่ต้องนอนก็เบิกค่ารักษาได้ครับ" },
+                { id: 38, part: 2, q: "เบิกค่าชดเชยรายวันได้สูงสุดกี่วัน?", a: "เบิกได้สูงสุดถึง 365 วันต่อการเจ็บป่วยครั้งนั้นๆ เลยครับคุณ... ช่วยให้คุณ... ไม่ต้องกังวลเรื่องขาดรายได้ครับ" },
+                { id: 39, part: 2, q: "คุ้มครองโรคมะเร็งทุกระยะไหม?", a: "แผนโรคร้ายแรงของเราคุ้มครองตั้งแต่ระยะเริ่มต้นไปจนถึงระยะรุนแรงเลยครับคุณลูกค้า" },
+                { id: 40, part: 2, q: "ถ้าลาออกจากงาน ประกันนี้ยังอยู่ไหม?", a: "อยู่ครับคุณ... เพราะเป็นประกันส่วนบุคคล ไม่ได้ผูกติดกับสวัสดิการบริษัท คุณ... สามารถถือความคุ้มครองนี้ได้ตลอดครับ" },
+                { id: 41, part: 2, q: "ชำระเบี้ยรายเดือนหรือรายปีดีกว่ากัน?", a: "รายปีมักจะมีส่วนลดให้ครับคุณ... แต่รายเดือนจะช่วยให้คุณ... บริหารเงินคล่องตัวกว่า คุณ... สะดวกแบบไหนมากกว่าครับ?" },
+                { id: 42, part: 2, q: "ถ้าจ่ายเบี้ยไม่ไหว ขอลดวงเงินได้ไหม?", a: "ได้ครับคุณ... ในอนาคตสามารถขอปรับลดแผนเพื่อให้สอดคล้องกับงบประมาณที่มีได้เสมอครับ" },
+                { id: 43, part: 2, q: "กรมธรรม์ส่งมาที่บ้านภายในกี่วัน?", a: "ภายใน 7-15 วันทำการหลังจากอนุมัติครับ คุณ... จะได้รับเล่มกรมธรรม์ตัวจริงไปตรวจสอบครับ" },
+                { id: 44, part: 2, q: "ถ้าข้อมูลในกรมธรรม์ผิด ต้องทำยังไง?", a: "คุณ... สามารถแจ้งขอแก้ไขได้ทันทีครับ เรามีเจ้าหน้าที่ดูแลประสานงานให้ฟรีไม่มีค่าใช้จ่ายครับ" },
+                { id: 45, part: 2, q: "มีค่ารักษาพยาบาลแบบผู้ป่วยนอก (OPD) ไหม?", a: "มีครับคุณ... สำหรับแผนที่รวม OPD คุณ... สามารถหาหมอรับยาแล้วกลับบ้านได้เลยโดยไม่ต้องนอนโรงพยาบาลครับ" },
+                { id: 46, part: 2, q: "ตรวจเจอว่าเป็นโรคหลังจากทำประกัน เคลมได้ไหม?", a: "ถ้าพ้นระยะเวลารอคอยแล้ว และตรวจเจอภายหลัง เคลมได้แน่นอน 100% ครับคุณ..." },
+                { id: 47, part: 2, q: "ถ้าเป็นโควิด-19 คุ้มครองไหม?", a: "คุ้มครองครับคุณ... ทั้งค่ารักษาพยาบาลและค่าชดเชยรายวันตามเงื่อนไขของผู้ป่วยในครับ"},
+                { id: 48, part: 2, q: "ครอบคลุมการรักษาทางเลือกอย่างฝังเข็มไหม?", a: "แผนส่วนใหญ่จะเน้นการรักษาแผนปัจจุบันครับ แต่บางแผนพิเศษอาจจะครอบคลุม เดี๋ยวผมตรวจสอบให้คุณ... ครับ" },
+                { id: 49, part: 2, q: "สมัครให้คนอื่นได้ไหม เช่น พ่อแม่?", a: "ได้ครับคุณ... คุณ... สามารถเป็นผู้ชำระเบี้ยให้กับบุคคลในครอบครัวได้ เพื่อมอบความมั่นคงให้พวกท่านครับ" },
+                { id: 50, part: 2, q: "เงินชดเชยรายวันโอนเข้าบัญชีภายในกี่วัน?", a: "หลังจากยื่นเอกสารครบถ้วน จะดำเนินการโอนเข้าบัญชีคุณ... ภายใน 7 วันทำการครับ" }
+            ],
+            part3: [              
+                { id: 61, part: 3, q: "ยังก่อนดีกว่า", a: "ครับฟังรายละเอียดตัวโครงการแล้วคิดเห็นยังไงบ้างครับ ดีใช่มั้ยครับ ผมถามนิดนึง เบี้ยประกันที่ผมแจ้งมีผลต่อการตัดสินใจไหมครับ ถ้ามีเดี๋ยวผมดูเบี้ยที่เหมาะสมกว่านี้ให้ครับ" },
+                { id: 62, part: 3, q: "ยินดีครับคุณสมชาย แต่ส่วนใหญ่พอวางสายไปแล้วมักจะยุ่งจนลืม คุณสมชายสงสัยตรงไหนไหมครับ ผมอธิบายให้เคลียร์ตอนนี้เลยอย่างที่แจ้งครับถ้าหากกลับไปคิดก็อาจจะลืมรายละเอียดไปและอาจทำให้พลาดโอกาสที่จะตอบรับโครงการดีๆไปนะครับ" },
+                { id: 63, part: 3, q: "ส่งเอกสารมาให้อ่านก่อนค่อยสมัคร", a: "อย่างที่เรียนแจ้ง ตั้งแต่ต้นสายครับ เนื่องจากเป็นโครงการพิเศษ ที่ให้เจ้าหน้าที่เฉพาะด้านโทรมา นำเสนอข้อมูลไม่มีเอกสารที่เป็นโบชัวร์จัดส่งให้ แต่หากลูกค้าฟังข้อมูลส่วนใดไม่ชัดเจนสอบถามเพิ่มเติมได้เลยนะครับ" },
+                { id: 64, part: 3, q: "เดี๋ยวถามที่บ้านก่อน ถ้าเขาโอเคจะโทรกลับ", a: "จริงๆแล้ว คุณสมชาย สามารถพิจารณาไปด้วยกันได้นะครับ หากฟังโครงการแล้วชอบเบี้ยประกันไม่มีผลกระทบกับค่าใช้ช่าย แจ้งเป็นข่าวดีให้คนในบ้านทราบได้เลยว่าคุณ... ได้เตรียมสวัสดิการที่ดีไว้ให้ครอบครัวแล้ว" },
+                { id: 65, part: 3, q: "ปีหน้าค่อยทำละกัน", a: "ปีหน้าเบี้ยจะมีการปรับเพิ่มขึ้นตามอายุของเราที่เพิ่มขึ้นและเราไม่รู้ว่าสุขภาพจะเป็นอย่างไร การทำตอนนี้คือการตัดสินใจที่ดีที่สุด ที่คุณสมชายทำเพื่อครอบครัวและตัวเองครับ เรียนเชิญไว้ด้วยกันเลยครับ" },
+                { id: 66, part: 3, q: "ขอเปรียบเทียบกับเจ้าอื่นก่อนนะ", a: "การเปรียบเทียบเป็นเรื่องดีครับ แต่แผนนี้เป็นโควต้าพิเศษสำหรับคุณ... ตอนนี้เท่านั้น คุณ... อาจจะหาจากที่อื่นไม่ได้ครับ" },
+                { id: 67, part: 3, q: "ไม่มีบัตรเครดิต ทำได้ไหม?", a: "ถ้าไม่มีบัตรเครดิตจะยังไม่สามารถเข้าร่วมโครงการได้ครับ ต้องขอโทษด้วยครับ แต่ถ้าหากคนในครอบครัว ของลูกค้ามีบัตรเครดิต ก็สามารถชำระเบี้ยประกันให้กับลูกค้าได้นะครับ" },
+                { id: 68, part: 3, q: "ทำไมต้องตัดสินใจตอนนี้เลย?", a: "เพราะสุขภาพและความเสี่ยงรอไม่ได้นะครับ เพราะฉนั้น การตอบรับสิทธิ์ตอนที่ร่างกายยังแข็งแรงคือจังหวะที่ดีที่สุดครับ" },
+                { id: 69, part: 3, q: "เบี้ยแพงไปหน่อย ลดกว่านี้ได้ไหม?", a: "จริงๆถ้ามองจากผลประโยชน์ที่ได้รับก็ถือว่าคุ้มค่านะครับ แต่เพื่อให้เหมาะสมกับลูกค้าและไม่หนักเกินไปเดี๋ยวผมลองปรับแผนให้ครับ เบี้ยลดลงแน่นอนแต่ความคุ้มครองยังคุ้มค่าเหมือนเดิมครับ หากเป็นเรทนี้ ลูกค้าสะดวกขึ้นนะครับ" },
+                { id: 70, part: 3, q: "กลัวโดนหลอก ไม่กล้าทำทางโทรศัพท์", a: "เข้าใจครับคุณสมชาย หากไม่มั่นใจ คุณสมชาย สามารถจดชื่อและเลขที่ใบอนุญาตของผมไปเช็คกับ คปภ.ได้ทันทีเพื่อความสบายใจครับ" },
+                { id: 71, part: 3, q: "แฟนไม่ให้ทำแน่ๆ เลย", a: "ลองคุยกันดูครับคุณ... แต่ถ้าบอกว่าคุณ... ทำเพื่อลดภาระค่าใช้จ่ายของครอบครัว ผมเชื่อว่าทางครอบครัวคุณ... ต้องเห็นด้วยครับ" },
+                { id: 72, part: 3, q: "เคยทำแล้วเคลมไม่ได้ เลยไม่อยากทำอีก", a: "นั่นเป็นเหตุผลที่ผมต้องเน้นถามคำถามสุขภาพให้ชัดเจนวันนี้ เพื่อให้ตอนคุณ... เคลมจะไม่มีปัญหาเหมือนครั้งก่อนครับ" },
+                { id: 73, part: 3, q: "ยังแข็งแรงดีอยู่ ไม่จำเป็นต้องใช้", a: "ประกันทำตอนแข็งแรงดีที่สุดครับคุณ... เพราะถ้าเจ็บป่วยแล้วจะทำไม่ได้เลย ถึงตอนนั้นจำเป็นแค่ไหนเงินก็ซื้อไม่ได้ครับ" },
+                { id: 74, part: 3, q: "ขอเอกสารมาอ่านก่อนค่อยสมัคร", a: "ในระบบโทรศัพท์เราจะส่งเล่มจริงให้คุณ... อ่านหลังสมัครครับ คุณ... มีสิทธิยกเลิกและรับเงินคืนได้ใน 15 วันถ้าไม่พอใจครับ" },
+                { id: 75, part: 3, q: "เบี้ยจ่ายทิ้งเปล่าๆ เสียดายตังค์", a: "เหมือนการซื้อความอุ่นใจครับคุณ... จ่ายน้อยเพื่อป้องกันความเสี่ยงที่อาจต้องจ่ายมหาศาลในอนาคตครับ" },
+                { id: 76, part: 3, q: "ไม่มีบัตรเครดิต ทำได้ไหม?", a: "ทำได้ครับคุณ... สามารถชำระผ่านแอปธนาคารหรือเคาน์เตอร์เซอร์วิสได้ สะดวกมากครับสำหรับคุณลูกค้า" },
+                { id: 77, part: 3, q: "กลัวบริษัทล้มละลายแล้วไม่ได้เงิน", a: "เราเป็นบริษัทใหญ่ที่มีเงินกองทุนสำรองตามกฎหมาย คปภ. ควบคุมเคร่งครัดมาก คุณ... มั่นใจได้ 100% ครับ" },
+                { id: 78, part: 3, q: "คุยนานแล้วนะ สรุปเบี้ยเท่าไหร่กันแน่?", a: "เบี้ยสำหรับคุณ... อยู่ที่เดือนละ XXX บาทครับ ซึ่งถือว่าคุ้มค่ามากเมื่อเทียบกับวงเงินรักษาที่คุณ... จะได้รับครับ" },
+                { id: 79, part: 3, q: "ถ้าคุ้มครองดีจริง ทำไมต้องโทรมาขาย?", a: "เพราะเราต้องการเข้าถึงลูกค้าโดยตรงเพื่อมอบสิทธิประโยชน์กลับคืนให้คุณ... ได้มากกว่าช่องทางอื่นครับ" },
+                { id: 80, part: 3, q: "เอาเบอร์มาจากไหน บอกมาสิ?", a: "เราเป็นพันธมิตรกับสถาบันการเงินที่คุณ... ใช้งานอยู่ครับ จึงได้รับสิทธิในการมอบโครงการพิเศษนี้ให้คุณ... ครับ" },
+                { id: 81, part: 3, q: "ถ้าผมทำแล้ว คุณจะได้อะไร?", a: "ผมได้ความภูมิใจที่ได้มอบความคุ้มครองที่ดีให้กับคุณ... ครับ และหน้าที่ของผมคือดูแลคุณ... ให้ดีที่สุดครับ" },
+                { id: 82, part: 3, q: "มีคนโทรมาเยอะมาก เลือกไม่ถูก", a: "พิจารณาที่ความคุ้มครองและความน่าเชื่อถือครับคุณ... ซึ่งแผนที่เสนอวันนี้ตอบโจทย์ทั้งสองอย่างเพื่อคุณ... ครับ" },
+                { id: 83, part: 3, q: "ประกันแบบนี้เคลมยากกว่าปกติไหม?", a: "ไม่เลยครับ มาตรฐานการเคลมเหมือนกันทุกช่องทาง และปัจจุบันเรามีระบบออนไลน์ที่สะดวกสำหรับคุณ... มากครับ" },
+                { id: 84, part: 3, q: "ขอปรึกษาหมอก่อนว่าต้องทำไหม", a: "แพทย์คงแนะนำให้ทำแน่นอนครับคุณ... เพราะท่านเห็นคนไข้ที่ต้องลำบากเพราะไม่มีประกันมาเยอะแล้วครับ" },
+                { id: 85, part: 3, q: "สมัครแล้วคุ้มครองกี่ปี?", a: "คุ้มครองแบบปีต่อปี และคุณ... สามารถต่ออายุได้ยาวนานจนถึงอายุ 80 ปีเลยครับ" },
+                { id: 86, part: 3, q: "ถ้าผมเปลี่ยนเบอร์โทรศัพท์ จะทำยังไง?", a: "คุณ... สามารถแจ้งผ่าน Call Center หรือแอปฯ ของบริษัทได้ตลอด 24 ชั่วโมงเพื่ออัปเดตข้อมูลครับ" },
+                { id: 87, part: 3, q: "ต้องจ่ายเงินงวดแรกตอนไหน?", a: "หลังจากคุณ... ตกลงยืนยันข้อมูล ระบบจะดำเนินการตามรอบที่คุณ... สะดวกแจ้งไว้ครับ" },
+                { id: 88, part: 3, q: "พูดยังไงก็ไม่อยากทำ", a: "รับทราบครับคุณ... แอดมินหรือท่านอยากให้เก็บข้อมูลนี้ไว้ก่อน เผื่อในอนาคตต้องการความคุ้มครองครับ" },
+                { id: 89, part: 3, q: "เดี๋ยวถามที่บ้านก่อน ถ้าเขาโอเคจะโทรกลับ", a: "คุณ... สามารถแจ้งเป็นข่าวดีให้คนในบ้านทราบได้นะครับ ว่าคุณ... ได้เตรียมสวัสดิการที่ดีไว้ให้ครอบครัวแล้ว" },
+                { id: 90, part: 3, q: "โอเค ตกลงทำครับ ต้องทำยังไงบ้าง?", a: "ยินดีด้วยครับคุณ... เป็นการตัดสินใจที่ยอดเยี่ยมมาก เดี๋ยวผมขออนุญาตบันทึกเสียงเพื่อรักษาสิทธิประโยชน์ให้คุณ... นะครับ" }
+            ]
+        };
+
+        function showAlert(message, type = 'info') { 
+            mainAlert.innerHTML = message;
+            mainAlert.className = `alert ${type}`;
+            mainAlert.style.display = 'block';
+            setTimeout(() => { mainAlert.style.display = 'none'; }, 5000);
+        }
+
+        window.saveUserName = function() {
+            localStorage.setItem('examUserName_agent', inputUserName.value.trim());
+            checkSubmitButtonStatus();
+        }
+
+        function initializeUser() {
+            let userId = localStorage.getItem(USER_ID_KEY);
+            if (!userId) {
+                userId = uuidv4(); 
+                localStorage.setItem(USER_ID_KEY, userId);
+            }
+            currentUserId = userId;
+        }
         
-        function showPart(partNumber) {
-            const questionArea = document.getElementById('questionArea');
-            questionArea.innerHTML = '';
+        function renderTsrGroupRadios() {
+            const groupDiv = document.getElementById('tsrGroupSelection');
+            if (!groupDiv) return;
+            groupDiv.innerHTML = ''; 
             
-            const filteredScripts = activeScripts.filter(s => s.part === partNumber);
-            const partName = (partNumber === 1) ? "Nursery (Part 1)" : (partNumber === 2) ? "New Onboarding (Part 2)" : "New TSRs (Part 3)";
+            tsrGroups.forEach((group, index) => {
+                const isChecked = (index === 0);
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = `tsrGroup${group.id}`;
+                input.className = 'group-radio-input';
+                input.name = 'tsrGroup';
+                input.value = group.id;
+                input.checked = isChecked;
+                
+                const label = document.createElement('label');
+                label.htmlFor = `tsrGroup${group.id}`;
+                label.className = 'group-radio-option'; 
+                label.textContent = group.name_th;
+                
+                groupDiv.appendChild(input);
+                groupDiv.appendChild(label);
+
+                if (isChecked) { selectedTsrGroup = group; }
+            });
             
-            if (filteredScripts.length === 0) {
-                questionArea.innerHTML = `<div class="alert alert-warning">ไม่พบรายการข้อโต้แย้งสำหรับ Part ${partNumber} (กรุณาตรวจสอบ Data ใน Code)</div>`;
+            groupDiv.addEventListener('change', (event) => {
+                const selectedId = parseInt(event.target.value);
+                selectedTsrGroup = tsrGroups.find(g => g.id === selectedId);
+            });
+        }
+        
+        async function logSessionStart(userName) {
+            if (!supabase || !selectedTsrGroup) return false;
+
+            const dataToInsert = {
+                user_id: currentUserId,
+                name: userName,
+                user_group: selectedTsrGroup.name_th,
+                insurance_type: 'Voice HD - SETUP',
+                part_number: 0, 
+                question_text: 'เริ่มทำแบบทดสอบ (Setup)'
+            };
+
+            try {
+                const { error: insertError } = await supabase.from('submissions_agent').insert([dataToInsert]);
+                if (insertError) {
+                    console.error("Superbase Session Log Error:", insertError);
+                    throw new Error(insertError.message || "Database insert error occurred.");
+                }
+                return true;
+            } catch (err) {
+                console.error("Superbase Session Log Error:", err);
+                return false;
+            }
+        }
+
+        async function uploadAudioToSupabase(fileBlob, questionId, partKey, userName) { 
+            const partNum = partKey.replace('part', 'P');
+            const safeUserName = userName.replace(/[^a-zA-Z0-9ก-ฮเ-์]/g, '_');
+            const fileName = `${safeUserName}_${partNum}_${questionId}_${Date.now()}.webm`;
+            const filePath = `agent/${partKey}/${questionId}/${fileName}`; 
+            const audioFile = new File([fileBlob], fileName, { type: fileBlob.type });
+
+            const { error } = await supabase.storage.from('responses').upload(filePath, audioFile, {
+                cacheControl: '3600',
+                upsert: false
+            });
+
+            if (error) { throw new Error(`Upload failed for ${questionId}: ${error.message}`); }
+
+            const { data: { publicUrl } } = supabase.storage.from('responses').getPublicUrl(filePath);
+            return publicUrl;
+        }
+
+        // 🟢 แก้ไขจุดที่พังตรงนี้แล้ว: ใช้ question.id ตรงๆ ได้เลยเพราะเป็นตัวเลขอยู่แล้ว
+        async function submitSingleResponse(blob, question, userName, partKey) { 
+            const publicUrl = await uploadAudioToSupabase(blob, question.id, partKey, userName);
+            const questionNumber = question.id; // ใช้ค่าตัวเลขจาก id ได้โดยตรง ไม่ต้อง .replace()
+            
+            const partNumName = partKey.replace('part', 'Part ');
+            
+            const responseToInsert = {
+                user_id: currentUserId, 
+                name: userName, 
+                user_group: selectedTsrGroup.name_th, 
+                insurance_type: `Voice HD - ${partNumName}`, 
+                part_number: questionNumber, 
+                question_text: question.q, 
+                audio_url: publicUrl 
+            };
+            
+            const { error: insertError } = await supabase.from('submissions_agent').insert([responseToInsert]);
+            if (insertError) { throw new Error(`Database submission failed: ${insertError.message}`); }
+            
+            return questionNumber;
+        }
+
+        function renderQuestionList() {
+            questionList.innerHTML = '';
+            shuffledQuestions.forEach((q, index) => {
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                item.id = `q-item-${index}`;
+                item.setAttribute('onclick', `displayQuestionFromList(${index})`); 
+                
+                const status = audioBlobs[currentPart][q.id];
+                let statusIcon = '';
+                let color = 'red';
+
+                if (status) {
+                    if (status.submitted) { statusIcon = '✓'; color = 'green'; } 
+                    else { statusIcon = '•'; color = 'orange'; }
+                } else { statusIcon = '•'; color = 'red'; }
+
+                item.innerHTML = `ข้อที่ ${index + 1} <span class="status-icon" style="color: ${color};">${statusIcon}</span>`;
+                if (index === currentIndex) { item.classList.add('active'); }
+                questionList.appendChild(item);
+            });
+            checkSubmitButtonStatus(); 
+        }
+
+        function updateQuestionUI(question) {
+            document.getElementById('currentQuestionTitle').textContent = `Part ${question.part}: คำถามข้อที่ ${currentIndex + 1}`;
+            questionPrompt.textContent = question.q; 
+            requiredAnswer.innerHTML = question.a;
+            
+            const status = audioBlobs[currentPart][question.id];
+            
+            playbackAudio.src = '';
+            playbackAudio.style.display = 'none';
+            sendQuestionBtn.style.display = 'none';
+            sendQuestionBtn.disabled = true;
+
+            if (status && status.blob) {
+                playbackAudio.src = currentBlobUrl; 
+                playbackAudio.style.display = 'block';
+                playbackAudio.load(); 
+
+                if (status.submitted) {
+                    recordingStatus.textContent = 'สถานะ: ส่งข้อมูลสำเร็จแล้ว (สามารถฟังหรือบันทึกใหม่เพื่อส่งซ้ำได้)';
+                    sendQuestionBtn.textContent = 'บันทึกใหม่และส่งซ้ำ';
+                    sendQuestionBtn.style.display = 'block';
+                    sendQuestionBtn.disabled = false;
+                } else {
+                    recordingStatus.textContent = 'สถานะ: บันทึกสำเร็จแล้ว! กรุณาฟังและกด "ส่งคำตอบข้อนี้"';
+                    sendQuestionBtn.textContent = 'ส่งคำตอบข้อนี้ (บันทึกและส่ง)';
+                    sendQuestionBtn.style.display = 'block';
+                    sendQuestionBtn.disabled = false;
+                }
+            } else {
+                recordingStatus.textContent = 'สถานะ: ยังไม่ได้เริ่มบันทึกเสียง';
+            }
+            
+            startRecBtn.disabled = false;
+            stopRecBtn.disabled = true;
+            renderQuestionList();
+        }
+
+        function displayQuestion(index) {
+            currentIndex = index;
+            const question = shuffledQuestions[index];
+            
+            if (currentBlobUrl) {
+                URL.revokeObjectURL(currentBlobUrl);
+                currentBlobUrl = null;
+            }
+
+            const status = audioBlobs[currentPart][question.id];
+            if (status && status.blob) {
+                currentBlobUrl = URL.createObjectURL(status.blob);
+            }
+            updateQuestionUI(question);
+        }
+        
+        window.displayQuestionFromList = function(index) {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                if (!confirm('กรุณาหยุดบันทึกเสียงก่อนเปลี่ยนไปทำข้ออื่น')) { return; }
+                if (mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
+            }
+            displayQuestion(index);
+        };
+
+        window.loadPart = async function(partKey) { 
+            const userName = inputUserName.value.trim();
+            if (!userName) {
+                showAlert('กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนเลือก Part', 'warning');
+                return;
+            }
+            if (!selectedTsrGroup) {
+                showAlert('กรุณาเลือกกลุ่มพนักงาน (TSR Group) ก่อนเริ่มทำแบบทดสอบ', 'warning');
                 return;
             }
 
-            questionArea.innerHTML += `<h3 class="text-center text-secondary mb-4">แสดงชุดฝึกอบรม: ${partName}</h3>`;
+            window.saveUserName(); 
+            loadingOverlay.style.display = 'flex';
+            recordingStatus.textContent = 'สถานะ: กำลังบันทึกข้อมูลการเริ่มต้นเซสชัน...';
 
-            filteredScripts.forEach((script) => {
-                const globalIndex = script.id; // Use ID as index
-                const item = document.createElement('div');
-                item.className = 'question-item';
-
-                const isPlaceholder = script.audioUrl.includes('placeholder.com');
-                
-                let audioButtonHtml = '';
-                if (!isPlaceholder) {
-                    audioButtonHtml = `<button class="play-audio-btn" onclick="playAudio(${globalIndex})">
-                                        <i class="fas fa-volume-up"></i> ฟังเสียงตัวอย่าง
-                                    </button>`;
-                } else {
-                    audioButtonHtml = `<span class="text-muted placeholder-link"><i class="fas fa-exclamation-circle me-1"></i> (ไม่มีไฟล์เสียง)</span>`;
-                }
-
-                // ** KEY FIX for iOS: Removed type="audio/mpeg" to let browser detect webm/mp4 automatically **
-                item.innerHTML = `
-                    <div class="question-title">
-                        <i class="fas fa-comment-dots text-danger me-2"></i> ${globalIndex}. ลูกค้าโต้แย้ง: **"${script.q}"**
-                    </div>
-                    <div class="d-flex align-items-center mb-2">
-                        ${audioButtonHtml}
-                        <button class="btn btn-outline-secondary btn-sm ms-3" onclick="toggleAnswer(${globalIndex})">
-                            <i class="fas fa-eye"></i> ดู/ซ้อมคำตอบ
-                        </button>
-                    </div>
-                    <div id="answer-${globalIndex}" class="answer-area">
-                        <p><strong>คำตอบพนักงาน:</strong> ${script.a}</p>
-                        <div class="audio-container">
-                           <audio id="audio-${globalIndex}" controls class="w-100" playsinline>
-                                <source src="${script.audioUrl}"> 
-                                เบราว์เซอร์ของคุณไม่รองรับการเล่นไฟล์เสียง
-                            </audio>
-                        </div>
-                    </div>
-                `;
-                questionArea.appendChild(item);
-            });
-        }
-
-        function initializeSimulator() {
-            const partButtonsDiv = document.getElementById('partButtons');
-            // Mock parts for initialization
-            const parts = [1, 2, 3];
+            const logSuccess = await logSessionStart(userName);
+            loadingOverlay.style.display = 'none';
             
-            parts.forEach(part => {
-                const button = document.createElement('button');
-                button.className = 'btn btn-outline-primary part-button';
-                button.textContent = `Part ${part}`;
-                button.onclick = () => showPart(part); 
-                partButtonsDiv.appendChild(button);
-            });
-            showPart(1); // Default Load
-        }
-
-        function toggleAnswer(index) {
-            const answerDiv = document.getElementById(`answer-${index}`);
-            if (answerDiv) {
-                const isVisible = answerDiv.style.display === 'block';
-                answerDiv.style.display = isVisible ? 'none' : 'block';
-                if (isVisible) stopAudio(index);
+            if (!logSuccess) {
+                showAlert('❌ พบข้อผิดพลาดในการบันทึกข้อมูลกลุ่มเข้าสู่ Superbase แต่สามารถดำเนินการต่อได้', 'warning');
+            } else {
+                showAlert(`✅ บันทึกข้อมูลเริ่มต้นเซสชัน (กลุ่ม: ${selectedTsrGroup.name_th}) สำเร็จแล้ว!`, 'success');
             }
-        }
 
-        function playAudio(index) {
-            // Stop others
-            document.querySelectorAll('audio').forEach(a => {
-                if (a.id !== `audio-${index}`) {
-                    a.pause();
-                    a.currentTime = 0;
-                }
-            });
-
-            const player = document.getElementById(`audio-${index}`);
-            const answerDiv = document.getElementById(`answer-${index}`);
+            currentPart = partKey;
+            shuffledQuestions = questions[currentPart]; 
+            document.getElementById('examArea').style.display = 'grid';
             
-            // Auto open answer to show player
-            if (answerDiv.style.display !== 'block') {
-                answerDiv.style.display = 'block';
-            }
+            document.querySelectorAll('.part-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn${partKey.charAt(0).toUpperCase() + partKey.slice(1)}`).classList.add('active');
+
+            displayQuestion(0); 
+        };
+
+        window.handleSingleSubmission = async function() { 
+            const question = shuffledQuestions[currentIndex];
+            const questionId = question.id;
+            const userName = inputUserName.value.trim();
+            const status = audioBlobs[currentPart][questionId];
             
-            if (player) {
-                player.play().catch(e => alert("ไม่สามารถเล่นไฟล์เสียงได้: " + e.message));
+            if (!status || !status.blob) {
+                showAlert('ไม่พบไฟล์เสียงที่บันทึกไว้สำหรับข้อนี้ กรุณาบันทึกใหม่', 'warning');
+                return;
             }
+
+            const audioBlob = status.blob;
+            loadingOverlay.style.display = 'flex';
+            recordingStatus.textContent = 'สถานะ: กำลังอัปโหลดและส่งข้อมูล...';
+            sendQuestionBtn.disabled = true;
+
+            try {
+                const questionNum = await submitSingleResponse(audioBlob, question, userName, currentPart);
+                loadingOverlay.style.display = 'none';
+                audioBlobs[currentPart][questionId].submitted = true; 
+
+                recordingStatus.textContent = 'สถานะ: ส่งข้อมูลสำเร็จแล้ว!';
+                showAlert(`ส่ง Part ${currentPart.replace('part', '')} ข้อที่ ${questionNum} สำเร็จแล้ว!`, 'success');
+
+            } catch (error) {
+                loadingOverlay.style.display = 'none';
+                console.error('Submission Error:', error);
+                if (audioBlobs[currentPart][questionId]) { audioBlobs[currentPart][questionId].submitted = false; }
+
+                recordingStatus.textContent = 'สถานะ: เกิดข้อผิดพลาดในการส่งข้อมูล!';
+                showAlert(`ส่งข้อมูลล้มเหลว: ${error.message}`, 'warning');
+            } finally {
+                updateQuestionUI(question);
+            }
+        };
+
+        window.handleStartRecording = async function() {
+            if (!inputUserName.value.trim()) {
+                showAlert('กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนเริ่มบันทึก', 'warning');
+                return;
+            }
+            if (!selectedTsrGroup) {
+                showAlert('กรุณาเลือกกลุ่มพนักงาน (TSR Group) ก่อนเริ่มทำแบบทดสอบ', 'warning');
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = event => { audioChunks.push(event.data); };
+
+                mediaRecorder.onstart = () => {
+                    recordingStatus.textContent = 'สถานะ: กำลังบันทึกเสียง...';
+                    startRecBtn.disabled = true;
+                    stopRecBtn.disabled = false;
+                    playbackAudio.style.display = 'none';
+                    sendQuestionBtn.style.display = 'none';
+                    playbackAudio.src = '';
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioChunks = [];
+                    
+                    const question = shuffledQuestions[currentIndex];
+                    const questionId = question.id;
+                    
+                    if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); }
+                    currentBlobUrl = URL.createObjectURL(audioBlob); 
+
+                    audioBlobs[currentPart][questionId] = { blob: audioBlob, submitted: false }; 
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    updateQuestionUI(question); 
+                    showAlert('บันทึกเสียงสำเร็จแล้ว! กรุณาตรวจสอบแล้วกด "ส่งคำตอบข้อนี้"', 'info');
+                };
+
+                mediaRecorder.onerror = (event) => {
+                    console.error("MediaRecorder Error:", event.error);
+                    recordingStatus.textContent = 'สถานะ: บันทึกผิดพลาด! ' + event.error.name;
+                    startRecBtn.disabled = false;
+                    stopRecBtn.disabled = true;
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+            } catch (err) {
+                console.error('Recording failed:', err);
+                showAlert('❌ ไม่สามารถเข้าถึงไมโครโฟนได้: ' + err.message, 'warning');
+                startRecBtn.disabled = false;
+                stopRecBtn.disabled = true;
+            }
+        };
+
+        window.handleStopRecording = function() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecBtn.disabled = true;
+                mediaRecorder.stop();
+            }
+        };
+
+        function checkSubmitButtonStatus() {
+            if (shuffledQuestions.length === 0) {
+                submitBtn.disabled = true;
+                return;
+            }
+            const totalQuestions = shuffledQuestions.length;
+            const submittedCount = Object.values(audioBlobs[currentPart]).filter(s => s.submitted).length;
+
+            submitBtn.textContent = `ส่งงาน Part ${currentPart.replace('part', '')} (ส่งแล้ว ${submittedCount}/${totalQuestions} ข้อ)`;
+            submitBtn.disabled = submittedCount === 0;
         }
 
-        function stopAudio(index) {
-            const player = document.getElementById(`audio-${index}`);
-            if (player) { player.pause(); player.currentTime = 0; }
-        }
+        window.submitExam = function() {
+            const totalQuestions = shuffledQuestions.length;
+            const submittedCount = Object.values(audioBlobs[currentPart]).filter(s => s.submitted).length;
 
-        document.addEventListener('DOMContentLoaded', initializeSimulator);
+            if (totalQuestions > 0 && submittedCount === totalQuestions) {
+                showAlert(`Part ${currentPart.replace('part', '')} ส่งข้อมูลครบถ้วน ${submittedCount}/${totalQuestions} ข้อแล้ว!`, 'success');
+                document.getElementById('examArea').style.display = 'none';
+                document.getElementById('currentQuestionTitle').textContent = 'ส่งงานสำเร็จ';
+                document.getElementById('questionPrompt').textContent = 'กรุณาเลือก Part อื่นเพื่อทำแบบทดสอบต่อ';
+                document.getElementById('requiredAnswer').textContent = '';
+            } else if (submittedCount > 0) {
+                showAlert(`**คุณได้ส่งไปแล้ว ${submittedCount} ข้อ** แต่ยังเหลืออีก ${totalQuestions - submittedCount} ข้อที่ยังไม่ได้ส่ง`, 'warning');
+            } else {
+                showAlert(`ยังไม่มีการส่งไฟล์เสียงสำเร็จเลย กรุณาส่งอย่างน้อย 1 ข้อก่อน`, 'warning');
+            }
+        };
 
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeUser();
+            const storedUserName = localStorage.getItem('examUserName_agent');
+            if (storedUserName) { inputUserName.value = storedUserName; }
+            renderTsrGroupRadios();
+            checkSubmitButtonStatus(); 
+        });
     </script>
 </body>
 </html>
