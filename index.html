@@ -109,7 +109,7 @@
           sessionStorage.setItem('login_time', loginTime);
 
           // 2. บันทึก/อัปเดตผู้ใช้ผ่านฟังก์ชัน register_user ใน Supabase (ใช้ได้กับ RLS)
-          const { error: rpcError } = await supabase.rpc('register_user', {
+         const { error: upsertError } = await supabase.rpc('upsert_user_agent', {
             p_email: email,
             p_full_name: name,
             p_emp_code: empCode,
