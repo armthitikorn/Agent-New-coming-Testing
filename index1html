@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent listening Objection</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Sarabun', sans-serif; }
+        .container { max-width: 1000px; margin-top: 30px; margin-bottom: 50px; }
+        .question-item { background-color: #ffffff; border-left: 5px solid #0d6efd; padding: 15px; margin-bottom: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .question-title { font-weight: bold; color: #343a40; margin-bottom: 10px; }
+        .answer-area { margin-top: 15px; padding: 10px; border-top: 1px solid #dee2e6; display: none; }
+        .answer-text { white-space: pre-wrap; margin-bottom: 10px; }
+        .audio-container { background-color: #e9ecef; border-radius: 5px; padding: 10px; margin-top: 10px; }
+        .play-audio-btn { background-color: #28a745; color: white; border: none; padding: 5px 15px; border-radius: 5px; margin-right: 10px; transition: background-color 0.3s; }
+        .play-audio-btn:hover { background-color: #1e7e34; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 class="text-center text-primary mb-2">ระบบจำลองการตอบข้อโต้แย้ง</h2>
+        <p class="text-center text-muted mb-4">รองรับการฟังเสียงบน iOS และ Android</p>
+
+        <div id="questionArea"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ชื่อพาร์ท (มีพาร์ทเดียว)
+        const PART_NAME = "ข้อโต้แย้งเพื่อขอเข้าพบ เสนอขายประกันชีวิต";
+
+        // ข้อมูลข้อโต้แย้ง + ลิงก์เสียงเฉลย (id ตรงกับลำดับในเอกสาร)
+        const scripts = [
+  {
+    "id": 1,
+    "q": "ยังไม่สนใจครับ ตอนนี้ยังไม่คิดจะทำประกัน",
+    "a": "เข้าใจครับ และยังไม่ต้องตัดสินใจทำประกันทางโทรศัพท์เลยครับ ที่ผมโทรมาเพื่อนัดหมายเข้าไปคุยสั้น ๆ ผมขอเวลาแค่ประมาณ 15–20 นาที เข้าไปแนะนำข้อมูลและช่วยดูว่าจริง ๆ แล้ว มีเรื่องไหนที่คุณลูกค้าควรวางแผนไว้ก่อนบ้าง ส่วนจะทำหรือไม่ทำ คุณลูกค้าค่อยตัดสินใจหลังจากมีข้อมูลก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/1.m4a"
+  },
+  {
+    "id": 2,
+    "q": "ผมมีประกันอยู่แล้วครับ",
+    "a": "ดีนะครับ ที่มีประกันอยู่แล้ว เป็นเรื่องที่ดี เพราะ ที่ผมโทรมาก็ไม่ได้ตั้งใจจะให้คุณลูกค้าต้องซื้อเพิ่มทันทีครับ แต่ผมขอเวลาแค่ประมาณ 15–20 นาที เพื่อเข้าไปแนะนำข้อมูล และช่วยดูว่าจริง ๆ แล้วมีเรื่องไหนที่คุณลูกค้า ควรวางแผนไว้ก่อนบ้าง ส่วนจะทำหรือไม่ทำ คุณลูกค้าค่อยตัดสินใจหลังจากมีข้อมูลก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/2.m4a"
+  },
+  {
+    "id": 3,
+    "q": "ผมมีตัวแทนดูแลอยู่แล้ว",
+    "a": "การมีตัวแทนที่ดูแลต่อเนื่องถือว่าเป็นเรื่องที่ดีมากครับ และผมก็ไม่ได้ตั้งใจจะเข้าไปแทนที่ตัวแทนที่ดูแลคุณลูกค้าอยู่เลยครับ ที่ผมอยากขอโอกาสเข้าไปพบ ผมใช้เวลาแค่ประมาณ 15–20 นาที เพื่อเข้าไปแนะนำข้อมูลและช่วยดูว่าจริง ๆ แล้วมีเรื่องไหนที่คุณลูกค้าควรวางแผนไว้ก่อนบ้าง ส่วนจะทำหรือไม่ทำ คุณลูกค้าค่อยตัดสินใจหลังจากมีข้อมูลก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/3.m4a"
+  },
+  {
+    "id": 4,
+    "q": "ช่วงนี้ยุ่งมาก ไม่มีเวลาเลยครับ",
+    "a": "เข้าใจเลยครับคุณลูกค้า ช่วงนี้คุณลูกค้ายุ่ง ผมจึงโทรมาเพื่อเช็คเวลาที่สะดวกตรงกัน ผมขอเวลาสั้น ๆ ประมาณ 15–20 นาที เพื่ออธิบายรายละเอียดที่สำคัญ ผมจะเตรียมเฉพาะข้อมูลที่เกี่ยวข้องกับคุณลูกค้าจริง ๆ เข้าไปพูดคุย ถ้าคุยแล้วคุณลูกค้าเห็นว่ายังไม่ใช่สิ่งที่จำเป็นตอนนี้ ก็ไม่เป็นไรเลยครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/4.m4a"
+  },
+  {
+    "id": 5,
+    "q": "ส่งรายละเอียดมาให้ดูก่อนก็ได้ครับ",
+    "a": "ยินดีครับ เดี๋ยวผมเตรียมเอกสารส่งให้นะครับ และผมอยากขอเจอคุณลูกค้าสั้นๆ เพื่อเลือกเฉพาะข้อมูลที่เกี่ยวกับคุณลูกค้าจริง ๆ จะได้ไม่ต้องเสียเวลาอ่านทั้งหมดครับ ผมใช้เวลาไม่นานครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/5.m4a"
+  },
+  {
+    "id": 6,
+    "q": "นัดได้ แต่บอกก่อนนะว่าผมไม่ซื้ออะไรเพิ่ม",
+    "a": "ได้ครับ ขอบคุณครับ คุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/6.m4a"
+  },
+  {
+    "id": 7,
+    "q": "ตอนนี้ยังไม่พร้อมครับ มีค่าใช้จ่ายเยอะ",
+    "a": "ที่ผมขอเข้าไปพบ ไม่ได้หมายความว่าคุณลูกค้าจะต้องซื้อหรือต้องมีค่าใช้จ่ายเพิ่มทันที ผมอยากขอเข้าไปพูดคุยกันก่อนครับ ถ้าดูแล้วตอนนี้ยังไม่ใช่เวลาที่เหมาะสม ก็ยังไม่ต้องทำอะไรครับ ขออนุญาตใช้เวลาในการพูดคุยสั้นๆ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/7.m4a"
+  },
+  {
+    "id": 8,
+    "q": "เมื่อก่อนเคยทำแล้ว ตัวแทนขายเสร็จก็หาย",
+    "a": "เข้าใจเลยครับ เพราะถ้าเป็นผม ก็รู้สึกไม่ดีที่ตัวแทนขายเสร็จแล้วไม่บริการ ผมเลยอยากขอเวลาสั้น ๆ ประมาณ 15–20 นาที เพื่ออธิบายรายละเอียดที่สำคัญ เรื่องระบบการบริการใหม่ผ่านไลน์ ของพรูเด็นเชียลครับ ผมจะเตรียมเฉพาะข้อมูลที่เกี่ยวข้องกับคุณลูกค้าจริง ๆ เข้าไปพูดคุย ถ้าคุยแล้วเห็นว่ายังไม่ใช่สิ่งที่จำเป็นตอนนี้ ก็ไม่เป็นไรเลยครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/8.m4a"
+  },
+  {
+    "id": 9,
+    "q": "มีอะไรก็บอกทางโทรศัพท์ได้เลยครับ",
+    "a": "ได้ครับคุณลูกค้า ทางโทรศัพท์ผมแจ้งได้นะครับ แต่เรื่องนี้อยากให้คุณลูกค้า เห็นภาพครบถ้วนมากกว่า เลยอยากขอเวลาเข้าไปคุยสั้น ๆ ครับ\n\nเราใช้เวลาพบกันประมาณ15-20 นาที ก่อนก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/9.m4a"
+  },
+  {
+    "id": 10,
+    "q": "ถ้าสนใจเดี๋ยวผมโทรกลับเองครับ",
+    "a": "ได้ครับคุณลูกค้า แต่ก่อนจะตัดสินใจว่า สนใจหรือไม่ ขอให้ผมเข้าไปอธิบายสั้น ๆ ก่อนครับ ถ้าไม่เหมาะ คุณลูกค้าไม่ต้องตัดสินใจอะไรเลยครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/10.m4a"
+  },
+  {
+    "id": 11,
+    "q": "ผมยังอายุน้อยอยู่ ยังไม่ต้องรีบทำประกันหรอกครับ",
+    "a": "จริงครับ ข้อดีคือคุณลูกค้า อายุน้อยนี่แหละครับ เป็นช่วงที่เหมาะกับการวางแผน ผมขอเข้าไป ให้ข้อมูลเอาไว้ก่อน แล้วค่อยพิจารณาตอนอายุเยอะๆ ก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/11.m4a"
+  },
+  {
+    "id": 12,
+    "q": "ประกันแพงนะ ผมไม่อยากมีภาระ",
+    "a": "เข้าใจเลยครับ แบบถูกๆก็มี และไม่เป็นภาระด้วยนะครับ แต่จริง ๆ แล้วต้องดูว่า คุณลูกค้า ต้องการวางแผนเรื่องอะไร และแบบไหนถึงจะเหมาะกับงบประมาณของเรา คุณลูกค้าเห็นด้วยไหมครับ ผมขอเข้าไปพูดคุยสั้น ๆ ก่อน\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/12.m4a"
+  },
+  {
+    "id": 13,
+    "q": "มีลูกหรือญาติเป็นตัวแทนฯ อยู่แล้ว",
+    "a": "เป็นตัวแทนของพรูเด็นเชียลไหมครับ ถ้าไม่ใช่ ผมก็อยากขอให้รับข้อมูลของเราไว้เพิ่มเติมครับ เผื่อเสริมในส่วนที่แตกต่างกัน ยังไม่ต้องตัดสินใจอะไรครับ ขออนุญาตเข้าไปพูดคุยสั้น ๆ ก่อน\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/13.m4a"
+  },
+  {
+    "id": 14,
+    "q": "อายุเยอะแล้ว ทำไปก็ไม่คุ้มหรอก",
+    "a": "เข้าใจเลยครับ หลายๆท่าน ที่มีอายุก็แจ้งกับผมแบบนี้ ผมก็ไม่อยากให้คุณลูกค้าตัดสินใจทำอะไรที่ไม่เหมาะกับตัวเอง ผมเลยอยากขออนุญาตคุณลูกค้าเข้าไปพูดคุยก่อนว่า ในช่วงวัยของคุณลูกค้า มีเรื่องไหนที่อยากวางแผนหรือให้ความสำคัญเป็นพิเศษ แล้วค่อยดูว่ามีทางเลือกที่เหมาะหรือไม่ครับ ยังไม่ต้องตัดสินใจทำอะไรเลย\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/14.m4a"
+  },
+  {
+    "id": 15,
+    "q": "ทำไปก็เคลมยาก เคยมีประสบการณ์ไม่ดี",
+    "a": "ผมเข้าใจเลยครับคุณลูกค้า และถ้าเป็นผมเจอประสบการณ์ไม่ดีมาก่อน ก็คงมีความกังวลเหมือนกันครับ ผมไม่อยากรีบอธิบายทางโทรศัพท์ว่าเป็นอย่างไร แต่อยากขอโอกาสเข้าไปฟังว่า เหตุการณ์ครั้งนั้นเกิดอะไรขึ้นและอะไรคือสิ่งที่คุณลูกค้ากังวล แล้วผมค่อยให้ข้อมูลในส่วนที่เกี่ยวข้องอย่างตรงไปตรงมาครับ ยังไม่ต้องตัดสินใจทำอะไรครับ เราคุยกันก่อนก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/15.m4a"
+  },
+  {
+    "id": 16,
+    "q": "มีสวัสดิการบริษัทดีอยู่แล้ว",
+    "a": "ดีเลยครับคุณลูกค้า ถ้ามีสวัสดิการที่ดีก็ไม่จำเป็นต้องทำเพิ่มนะครับ ผมขอเข้าไปคุยในสิ่งที่ยังขาดหรือสวัสดิการที่ยังไม่มี เช่นโรคร้ายแรงที่จ่ายเงินก้อนใหญ่หลักล้าน หรือ ชดเชยกรณีนอนโรงพยาบาล รับฟังข้อมูลไว้ก่อนก็ได้ครับ แล้วคุณลูกค้าค่อยพิจารณาเองว่าจำเป็นต้องเพิ่มเติมหรือไม่ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/16.m4a"
+  },
+  {
+    "id": 17,
+    "q": "ไม่อยากคุยเรื่องประกัน",
+    "a": "รับทราบครับ ถ้าไม่คุยเรื่องประกัน เราคุยเรื่องสวัสดิการสุขภาพ การวางแผนเพิ่มเงินเกษียณ หรือการลดหย่อนภาษีดีไหมครับ” คุณลูกค้าไม่ต้องกังวล ผมมีหน้าที่ให้คำแนะนำในส่วนนี้เท่านั้น และถ้าคุณลูกค้าสนใจผมแค่เสนอวิธีการที่คุณลูกค้าต้องการ ถ้าฟังแล้วคิดว่ายังไม่ใช่ ก็ไม่เป็นไรครับ ขอโอกาสให้ผมได้เข้าพบ และได้มีโอกาสทำความรู้จักคุณลูกค้า\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/17.m4a"
+  },
+  {
+    "id": 18,
+    "q": "ไม่รู้จักพรูเด็นเชียล",
+    "a": "พรูเด็นเชียลเป็นบริษัทชั้นนำของประเทศอังกฤษครับ ทำธุรกิจมา 178 ปี และในประเทศไทยเราเปิดมา 31 ปี มีช่องทางจัดจำหน่ายที่หลากหลาย เพราะมีทั้ง UOB /TTB /CIMB /Tele sales /Agency /The1 ครับ บริษัทฯ มีทุนจดทะเบียนกว่า 22,000 ล้านบาท สินทรัพย์ในประเทศไทยรวม 200,000 ล้านบาท ผมขออนุญาตเข้าไปแนะนำตัวและบริษัทเพิ่มเติมนะครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/18.m4a"
+  },
+  {
+    "id": 19,
+    "q": "จะเสียเวลาคุณเปล่าๆ",
+    "a": "ขอบคุณมาก ๆ ครับ เป็นหน้าที่ของผมอยู่แล้วครับ ในการไปพบคุณลูกค้าที่บ้าน และแนะนำการบริการที่ผมมี ผมยินดีให้คำแนะนำ และให้บริการด้านการวางแผนความคุ้มครอง สวัสดิการสุขภาพ หรือจะเป็นเรื่องการวางแผนเกษียณ หรือทุนการศึกษาให้กับลูกก็ได้ คุณลูกค้าคิดว่าเรื่องไหนน่าจะเป็นประโยชน์ ผมขออนุญาตเตรียมข้อมูลไปเพื่อแนะนำนะครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ ? …",
+    "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/19.m4a"
+  }
+];
+
+        function escapeHtml(s) {
+            return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function renderQuestions() {
+            const area = document.getElementById('questionArea');
+            let html = `<h3 class="text-center text-secondary mb-4">${escapeHtml(PART_NAME)}</h3>`;
+
+            scripts.forEach(script => {
+                const id = script.id;
+                html += `
+                <div class="question-item">
+                    <div class="question-title">
+                        <i class="fas fa-comment-dots text-danger me-2"></i>${id}. ลูกค้าโต้แย้ง: “${escapeHtml(script.q)}”
+                    </div>
+                    <div class="d-flex align-items-center flex-wrap mb-2">
+                        <button class="play-audio-btn" onclick="playAudio(${id})">
+                            <i class="fas fa-volume-up"></i> ฟังเสียงตัวอย่าง
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="toggleAnswer(${id})">
+                            <i class="fas fa-eye"></i> ดู/ซ้อมคำตอบ
+                        </button>
+                    </div>
+                    <div id="answer-${id}" class="answer-area">
+                        <div class="answer-text"><strong>คำตอบพนักงาน:</strong>\n${escapeHtml(script.a)}</div>
+                        <div class="audio-container">
+                            <audio id="audio-${id}" controls preload="none" class="w-100" playsinline src="${script.audioUrl}">
+                                เบราว์เซอร์ของคุณไม่รองรับการเล่นไฟล์เสียง
+                            </audio>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            area.innerHTML = html;
+
+            // เล่นทีละไฟล์: เมื่อไฟล์ใดเริ่มเล่น ให้หยุดไฟล์อื่น
+            area.querySelectorAll('audio').forEach(a => {
+                a.addEventListener('play', () => {
+                    area.querySelectorAll('audio').forEach(o => { if (o !== a) o.pause(); });
+                });
+            });
+        }
+
+        function toggleAnswer(id) {
+            const div = document.getElementById(`answer-${id}`);
+            const isVisible = div.style.display === 'block';
+            div.style.display = isVisible ? 'none' : 'block';
+            if (isVisible) stopAudio(id);
+        }
+
+        function playAudio(id) {
+            const div = document.getElementById(`answer-${id}`);
+            const player = document.getElementById(`audio-${id}`);
+            div.style.display = 'block';
+            player.play().catch(e => alert("ไม่สามารถเล่นไฟล์เสียงได้: " + e.message));
+        }
+
+        function stopAudio(id) {
+            const player = document.getElementById(`audio-${id}`);
+            if (player) { player.pause(); player.currentTime = 0; }
+        }
+
+        document.addEventListener('DOMContentLoaded', renderQuestions);
+    </script>
+</body>
+</html>
