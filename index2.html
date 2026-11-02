@@ -306,6 +306,7 @@ async function logSessionStart(userName) {
         return true;
     } catch (err) {
         console.error("Superbase Session Log Error:", err);
+        window.lastSessionError = err.message || String(err);
         return false;
     }
 }
@@ -445,7 +446,7 @@ window.loadPart = async function(partKey) {
     loadingOverlay.style.display = 'none';
 
     if (!logSuccess) {
-        showAlert('❌ พบข้อผิดพลาดในการบันทึกข้อมูลกลุ่มเข้าสู่ Superbase แต่สามารถดำเนินการต่อได้', 'warning');
+        showAlert(`❌ พบข้อผิดพลาดในการบันทึกข้อมูลกลุ่มเข้าสู่ Superbase แต่สามารถดำเนินการต่อได้<br><small>สาเหตุ: ${window.lastSessionError || 'ไม่ทราบ'}</small>`, 'warning');
     } else {
         showAlert(`✅ บันทึกข้อมูลเริ่มต้นเซสชัน (กลุ่ม: ${selectedTsrGroup.name_th}) สำเร็จแล้ว!`, 'success');
     }
