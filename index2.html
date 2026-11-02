@@ -154,11 +154,9 @@ const partDbName = {
 };
 
 const tsrGroups = [
-    { id: 0, name_th: "Trainer Group (ฝึกซ้อม)", name_en: "Trainer Group", description: "ใช้สำหรับการฝึกซ้อมของเทรนเนอร์หรือผู้ประเมิน" },
-    { id: 1, name_th: "พนักงานกลุ่มเนอสเซอรี่", name_en: "Nursery Group", description: "พนักงานใหม่ที่อยู่ระหว่างการฝึกอบรมเบื้องต้น" },
-    { id: 2, name_th: "New TSRs On boarding Group", name_en: "New TSRs Onboarding", description: "พนักงานใหม่ที่อยู่ระหว่างการเริ่มงานและฝึกปฏิบัติ" },
-    { id: 3, name_th: "New TSRs", name_en: "New TSRs", description: "พนักงานใหม่ที่ผ่านช่วง Onboarding แล้ว" },
-    { id: 4, name_th: "Existing TSRs", name_en: "Existing TSRs", description: "พนักงานที่มีประสบการณ์แล้ว" }
+    { id: 1, name_th: "PRUSmart Agent", name_en: "PRUSmart Agent", description: "กลุ่ม PRUSmart Agent" },
+    { id: 2, name_th: "Rookie", name_en: "Rookie", description: "กลุ่ม Rookie" },
+    { id: 3, name_th: "AL", name_en: "AL", description: "กลุ่ม AL" }
 ];
 let selectedTsrGroup = null;
 let currentUserId = null;
@@ -267,7 +265,7 @@ function renderTsrGroupRadios() {
     if (!groupDiv) return;
     groupDiv.innerHTML = '';
     tsrGroups.forEach((group, index) => {
-        const isChecked = (index === 0);
+        const isChecked = false; // ไม่เลือกให้ก่อน ให้พนักงานเลือกเอง
         const input = document.createElement('input');
         input.type = 'radio';
         input.id = `tsrGroup${group.id}`;
