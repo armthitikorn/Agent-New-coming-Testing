@@ -232,10 +232,6 @@ const questions = {
     ]
 };
 
-// เสียงตัวอย่างของ "การโทรนัดหมาย" ใช้ไฟล์ชุดเดิม 1-19.m4a
-const SAMPLE_BASE = 'https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Agency%20listening/';
-questions.part1.forEach(q => { q.audioUrl = SAMPLE_BASE + q.id + '.m4a'; });
-
 function showAlert(message, type = 'info') {
     mainAlert.innerHTML = message;
     mainAlert.className = `alert ${type}`;
