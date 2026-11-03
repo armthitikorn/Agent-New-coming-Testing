@@ -428,10 +428,6 @@ window.loadPart = async function(partKey) {
         showAlert('กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนเลือกหัวข้อ', 'warning');
         return;
     }
-    if (!selectedTsrGroup) {
-        showAlert('กรุณาเลือกกลุ่มพนักงาน (TSR Group) ก่อนเริ่มทำแบบทดสอบ', 'warning');
-        return;
-    }
 
     window.saveUserName();
     loadingOverlay.style.display = 'flex';
