@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>การจำลองสถานการณ์และตอบข้อโต้แย้ง (Voice HD) - พร้อม TSR Group & Superbase Tracking</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Sarabun',sans-serif;background-color:#f4f7f6;margin:0;padding:0;color:#333;min-height:100vh}
+.container{max-width:1200px;margin:20px auto;background:#fff;padding:30px;border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.1)}
+header{text-align:center;margin-bottom:30px;border-bottom:2px solid #e0e0e0;padding-bottom:15px}
+h1{color:#007bff;font-weight:700}
+h2{color:#007bff;border-left:4px solid #007bff;padding-left:10px}
+.user-info,.part-selection{margin-bottom:25px;padding:15px;border:1px solid #ddd;border-radius:8px}
+#inputUserName{padding:10px;max-width:300px;border:1px solid #ccc;border-radius:4px;box-sizing:border-box;font-size:16px}
+.part-selection{border-top:none;padding-top:0}
+.group-radio-option{display:inline-block;cursor:pointer;padding:8px 15px;border:1px solid #ccc;border-radius:20px;transition:all .2s;font-size:.9em;margin:5px}
+.group-radio-input:checked+.group-radio-option{background-color:#007bff;color:#fff;border-color:#007bff;font-weight:700}
+.group-radio-input{display:none}
+.part-buttons{display:flex;gap:15px;flex-wrap:wrap}
+.sub-buttons{margin-top:12px}
+.part-button{flex:1;min-width:120px;padding:12px 25px;font-size:16px;cursor:pointer;border:1px solid #007bff;border-radius:6px;background-color:#fff;color:#007bff;transition:background-color .3s,color .3s}
+.part-button.sub{font-size:14px;min-width:150px;padding:10px 12px}
+.part-button:hover,.part-button.active{background-color:#007bff;color:#fff;box-shadow:0 4px 8px rgba(0,123,255,.3)}
+#examArea{display:grid;grid-template-columns:2fr 1fr;gap:30px}
+@media (max-width:768px){.question-item{font-size:.9em}#examArea{grid-template-columns:1fr}.container{margin:10px;padding:15px}}
+.question-panel{padding:20px;border:1px solid #e0e0e0;border-radius:8px;background-color:#f9f9f9}
+.question-content,.required-answer{padding:15px;border-radius:6px;margin-top:15px;font-size:1.1em}
+.question-content{background-color:#e0f7fa;border-left:5px solid #00bcd4}
+.required-answer{background-color:#ffeccf;border-left:5px solid #ff9800}
+.recording-controls{margin-top:25px;display:flex;gap:15px;align-items:center;flex-wrap:wrap}
+#recordingStatus{font-weight:700;margin-top:20px;font-size:1.1em;color:#007bff}
+.btn{padding:12px 25px;border:none;border-radius:8px;color:#fff;cursor:pointer;font-weight:700;transition:opacity .2s,transform .2s;font-size:1em}
+.btn:hover:not(:disabled){transform:translateY(-2px)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background-color:#dc3545}
+.btn-success{background-color:#28a745}
+.btn-primary{background-color:#007bff;margin-top:20px;width:100%}
+#playbackControls{margin-top:15px;display:flex;flex-wrap:wrap;align-items:center;gap:15px;padding:10px;border-top:1px solid #eee}
+#playbackAudio{flex-grow:1;min-width:200px}
+#sendQuestionBtn{flex-shrink:0;font-size:1.1em}
+.question-list-panel{padding:15px;background-color:#fff;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,.05);max-height:600px;overflow-y:auto}
+.question-item{padding:10px;border-bottom:1px solid #eee;cursor:pointer;transition:background-color .2s;display:flex;justify-content:space-between;align-items:center}
+.question-item:hover,.question-item.active{background-color:#e9f7ff;font-weight:700;border-left:3px solid #007bff}
+.status-icon{font-size:1.2em;margin-left:5px}
+.alert{padding:15px;margin-bottom:20px;border-radius:8px;display:none;font-weight:700}
+.alert.info{background-color:#e7f7ff;color:#0056b3;border:1px solid #b8daff}
+.alert.success{background-color:#d4edda;color:#155724;border:1px solid #c3e6cb}
+.alert.warning{background-color:#fff3cd;color:#856404;border:1px solid #ffeeba}
+#loadingOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,.85);display:none;justify-content:center;align-items:center;z-index:1000;flex-direction:column;font-size:1.8em;color:#007bff}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>3.การฝึกตอบข้อโต้แย้ง Test script</h1>
+        <p>เลือกหัวข้อที่ต้องการ แล้วบันทึกเสียงทีละข้อ และกดส่งเมื่อตรวจสอบไฟล์เสียงแล้ว</p>
+    </header>
+
+    <div id="mainAlert" class="alert info"></div>
+
+    <div class="user-info">
+        <h2>1. ข้อมูลผู้เข้าสอบ</h2>
+        <label for="inputUserName">ชื่อ-นามสกุล/รหัสพนักงาน:</label>
+        <input type="text" id="inputUserName" onchange="saveUserName()" placeholder="กรุณากรอกชื่อ-นามสกุล/รหัสพนักงาน" required>
+    </div>
+
+    <div class="part-selection">
+        <h2>2. เลือกหัวข้อที่ต้องการทำแบบทดสอบ</h2>
+        <div class="part-buttons">
+            <button id="btnPart1" class="part-button" onclick="loadPart('part1')">การโทรนัดหมาย</button>
+            <button id="btnProducts" class="part-button" onclick="toggleProducts()">ผลิตภัณฑ์</button>
+            <button id="btnPart3" class="part-button" onclick="loadPart('part3')">ปิดการขาย</button>
+        </div>
+        <div id="productButtons" class="part-buttons sub-buttons" style="display: none;">
+            <button id="btnPart2a" class="part-button sub" onclick="loadPart('part2a')">PRUWhow life 99/20</button>
+            <button id="btnPart2b" class="part-button sub" onclick="loadPart('part2b')">สัญญาเพิ่มเติม ADD RCC (ADD)OD2</button>
+            <button id="btnPart2c" class="part-button sub" onclick="loadPart('part2c')">Multi_CI (CM)</button>
+            <button id="btnPart2d" class="part-button sub" onclick="loadPart('part2d')">PRUBestter Care : HAL,HAP</button>
+        </div>
+    </div>
+
+    <div id="examArea" style="display: none;">
+        <div class="question-panel">
+            <h2 id="currentQuestionTitle">การโทรนัดหมาย: คำถามข้อที่ 1</h2>
+            <div class="question-content">
+                <p><strong>คำถาม:</strong> <span id="questionPrompt">...</span></p>
+            </div>
+            <div class="required-answer">
+                <p><strong>แนวทางคำตอบที่ต้องการ:</strong> <span id="requiredAnswer">...</span></p>
+            </div>
+            <div id="sampleAudioBox" style="display: none; margin-top: 15px;">
+                <p><strong>ตัวอย่างเสียง:</strong></p>
+                <audio id="sampleAudio" controls preload="none" playsinline style="width: 100%;"></audio>
+            </div>
+            <p id="recordingStatus" style="font-weight: 700; margin-top: 20px;">สถานะ: ยังไม่ได้เริ่มบันทึกเสียง</p>
+            <div class="recording-controls">
+                <button id="startRecBtn" class="btn btn-success" onclick="handleStartRecording()">เริ่มบันทึกเสียง</button>
+                <button id="stopRecBtn" class="btn btn-danger" onclick="handleStopRecording()" disabled>หยุดบันทึก</button>
+            </div>
+            <div id="playbackControls">
+                <audio id="playbackAudio" controls style="display: none;"></audio>
+                <button id="sendQuestionBtn" onclick="handleSingleSubmission()" class="btn btn-success" style="display: none;" disabled>ส่งคำตอบข้อนี้ (บันทึกและส่ง)</button>
+            </div>
+            <button id="submitBtn" onclick="submitExam()" class="btn btn-primary" disabled>ส่งงาน (ส่งแล้ว 0 ข้อ)</button>
+        </div>
+        <div class="question-list-panel">
+            <h3>รายการคำถาม</h3>
+            <div id="questionList"></div>
+        </div>
+    </div>
+</div>
+
+<div id="loadingOverlay"><p>กำลังดำเนินการส่งข้อมูล... กรุณารอสักครู่</p></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+import { v4 as uuidv4 } from 'https://cdn.jsdelivr.net/npm/uuid@8.3.2/dist/esm-browser/index.js';
+
+const supabaseUrl = 'https://wzwyotzzxycqfwercakh.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind6d3lvdHp6eHljcWZ3ZXJjYWtoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcwNTg3MTMsImV4cCI6MjA3MjYzNDcxM30.lgiAf9oBUqsaWGb3u_80wuoKAODQHE_lIBxpGumhrno';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+let audioBlobs = { part1: {}, part2a: {}, part2b: {}, part2c: {}, part2d: {}, part3: {} };
+let mediaRecorder;
+let audioChunks = [];
+let currentPart = 'part1';
+let shuffledQuestions = [];
+let currentIndex = 0;
+let currentBlobUrl = null;
+
+// ชื่อหัวข้อที่แสดงบนหน้าจอ
+const partLabels = {
+    part1: 'การโทรนัดหมาย',
+    part2a: 'ผลิตภัณฑ์ · PRUWhow life 99/20',
+    part2b: 'ผลิตภัณฑ์ · สัญญาเพิ่มเติม ADD RCC (ADD)OD2',
+    part2c: 'ผลิตภัณฑ์ · Multi_CI (CM)',
+    part2d: 'ผลิตภัณฑ์ · PRUBestter Care : HAL,HAP',
+    part3: 'ปิดการขาย'
+};
+// ชื่อที่บันทึกลงคอลัมน์ insurance_type (Part 1 และ Part 3 คงชื่อเดิม ข้อมูลเก่าไม่เปลี่ยน)
+const partDbName = {
+    part1: 'Part 1',
+    part2a: 'Part 2 - PRUWhow life 99/20',
+    part2b: 'Part 2 - ADD RCC (ADD)OD2',
+    part2c: 'Part 2 - Multi_CI (CM)',
+    part2d: 'Part 2 - PRUBestter Care : HAL,HAP',
+    part3: 'Part 3'
+};
+
+// ข้อมูลพนักงานมาจากหน้าลงทะเบียน (URL ก่อน แล้วค่อย sessionStorage)
+const qp = new URLSearchParams(location.search);
+const ss = k => { try { return sessionStorage.getItem(k) || ''; } catch (e) { return ''; } };
+// กลุ่มที่บันทึกลงคอลัมน์ user_group: PRUSmart Agent / Rookie / AL (ถ้าไม่มี ใช้แผนก)
+const userGroupName = (qp.get('subdept') || ss('sub_department') || qp.get('dept') || ss('department') || '').trim();
+let currentUserId = null;
+const USER_ID_KEY = 'voice_hd_user_id_agent';
+
+const inputUserName = document.getElementById('inputUserName');
+const mainAlert = document.getElementById('mainAlert');
+const recordingStatus = document.getElementById('recordingStatus');
+const startRecBtn = document.getElementById('startRecBtn');
+const stopRecBtn = document.getElementById('stopRecBtn');
+const playbackAudio = document.getElementById('playbackAudio');
+const questionList = document.getElementById('questionList');
+const loadingOverlay = document.getElementById('loadingOverlay');
+const submitBtn = document.getElementById('submitBtn');
+const questionPrompt = document.getElementById('questionPrompt');
+const requiredAnswer = document.getElementById('requiredAnswer');
+const sendQuestionBtn = document.getElementById('sendQuestionBtn');
+
+const questions = {
+    part1: [
+                { id: 1, part: 1, q: "ยังไม่สนใจครับ ตอนนี้ยังไม่คิดจะทำประกัน", a: "เข้าใจครับ และยังไม่ต้องตัดสินใจทำประกันทางโทรศัพท์เลยครับ ที่ผมโทรมาเพื่อนัดหมายเข้าไปคุยสั้น ๆ ผมขอเวลาแค่ประมาณ 15–20 นาที เข้าไปแนะนำข้อมูลและช่วยดูว่าจริง ๆ แล้ว มีเรื่องไหนที่คุณลูกค้าควรวางแผนไว้ก่อนบ้าง ส่วนจะทำหรือไม่ทำ คุณลูกค้าค่อยตัดสินใจหลังจากมีข้อมูลก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 2, part: 1, q: "ผมมีประกันอยู่แล้วครับ", a: "ดีนะครับ ที่มีประกันอยู่แล้ว เป็นเรื่องที่ดี เพราะ ที่ผมโทรมาก็ไม่ได้ตั้งใจจะให้คุณลูกค้าต้องซื้อเพิ่มทันทีครับ แต่ผมขอเวลาแค่ประมาณ 15–20 นาที เพื่อเข้าไปแนะนำข้อมูล และช่วยดูว่าจริง ๆ แล้วมีเรื่องไหนที่คุณลูกค้า ควรวางแผนไว้ก่อนบ้าง ส่วนจะทำหรือไม่ทำ คุณลูกค้าค่อยตัดสินใจหลังจากมีข้อมูลก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 3, part: 1, q: "ผมมีตัวแทนดูแลอยู่แล้ว", a: "การมีตัวแทนที่ดูแลต่อเนื่องถือว่าเป็นเรื่องที่ดีมากครับ และผมก็ไม่ได้ตั้งใจจะเข้าไปแทนที่ตัวแทนที่ดูแลคุณลูกค้าอยู่เลยครับ ที่ผมอยากขอโอกาสเข้าไปพบ ผมใช้เวลาแค่ประมาณ 15–20 นาที เพื่อเข้าไปแนะนำข้อมูลและช่วยดูว่าจริง ๆ แล้วมีเรื่องไหนที่คุณลูกค้าควรวางแผนไว้ก่อนบ้าง ส่วนจะทำหรือไม่ทำ คุณลูกค้าค่อยตัดสินใจหลังจากมีข้อมูลก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 4, part: 1, q: "ช่วงนี้ยุ่งมาก ไม่มีเวลาเลยครับ", a: "เข้าใจเลยครับคุณลูกค้า ช่วงนี้คุณลูกค้ายุ่ง ผมจึงโทรมาเพื่อเช็คเวลาที่สะดวกตรงกัน ผมขอเวลาสั้น ๆ ประมาณ 15–20 นาที เพื่ออธิบายรายละเอียดที่สำคัญ ผมจะเตรียมเฉพาะข้อมูลที่เกี่ยวข้องกับคุณลูกค้าจริง ๆ เข้าไปพูดคุย ถ้าคุยแล้วคุณลูกค้าเห็นว่ายังไม่ใช่สิ่งที่จำเป็นตอนนี้ ก็ไม่เป็นไรเลยครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 5, part: 1, q: "ส่งรายละเอียดมาให้ดูก่อนก็ได้ครับ", a: "ยินดีครับ เดี๋ยวผมเตรียมเอกสารส่งให้นะครับ และผมอยากขอเจอคุณลูกค้าสั้นๆ เพื่อเลือกเฉพาะข้อมูลที่เกี่ยวกับคุณลูกค้าจริง ๆ จะได้ไม่ต้องเสียเวลาอ่านทั้งหมดครับ ผมใช้เวลาไม่นานครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 6, part: 1, q: "นัดได้ แต่บอกก่อนนะว่าผมไม่ซื้ออะไรเพิ่ม", a: "ได้ครับ ขอบคุณครับ คุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 7, part: 1, q: "ตอนนี้ยังไม่พร้อมครับ มีค่าใช้จ่ายเยอะ", a: "ที่ผมขอเข้าไปพบ ไม่ได้หมายความว่าคุณลูกค้าจะต้องซื้อหรือต้องมีค่าใช้จ่ายเพิ่มทันที ผมอยากขอเข้าไปพูดคุยกันก่อนครับ ถ้าดูแล้วตอนนี้ยังไม่ใช่เวลาที่เหมาะสม ก็ยังไม่ต้องทำอะไรครับ ขออนุญาตใช้เวลาในการพูดคุยสั้นๆ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 8, part: 1, q: "เมื่อก่อนเคยทำแล้ว ตัวแทนขายเสร็จก็หาย", a: "เข้าใจเลยครับ เพราะถ้าเป็นผม ก็รู้สึกไม่ดีที่ตัวแทนขายเสร็จแล้วไม่บริการ ผมเลยอยากขอเวลาสั้น ๆ ประมาณ 15–20 นาที เพื่ออธิบายรายละเอียดที่สำคัญ เรื่องระบบการบริการใหม่ผ่านไลน์ ของพรูเด็นเชียลครับ ผมจะเตรียมเฉพาะข้อมูลที่เกี่ยวข้องกับคุณลูกค้าจริง ๆ เข้าไปพูดคุย ถ้าคุยแล้วเห็นว่ายังไม่ใช่สิ่งที่จำเป็นตอนนี้ ก็ไม่เป็นไรเลยครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 9, part: 1, q: "มีอะไรก็บอกทางโทรศัพท์ได้เลยครับ", a: "ได้ครับคุณลูกค้า ทางโทรศัพท์ผมแจ้งได้นะครับ แต่เรื่องนี้อยากให้คุณลูกค้า เห็นภาพครบถ้วนมากกว่า เลยอยากขอเวลาเข้าไปคุยสั้น ๆ ครับ\n\nเราใช้เวลาพบกันประมาณ15-20 นาที ก่อนก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 10, part: 1, q: "ถ้าสนใจเดี๋ยวผมโทรกลับเองครับ", a: "ได้ครับคุณลูกค้า แต่ก่อนจะตัดสินใจว่า สนใจหรือไม่ ขอให้ผมเข้าไปอธิบายสั้น ๆ ก่อนครับ ถ้าไม่เหมาะ คุณลูกค้าไม่ต้องตัดสินใจอะไรเลยครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 11, part: 1, q: "ผมยังอายุน้อยอยู่ ยังไม่ต้องรีบทำประกันหรอกครับ", a: "จริงครับ ข้อดีคือคุณลูกค้า อายุน้อยนี่แหละครับ เป็นช่วงที่เหมาะกับการวางแผน ผมขอเข้าไป ให้ข้อมูลเอาไว้ก่อน แล้วค่อยพิจารณาตอนอายุเยอะๆ ก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 12, part: 1, q: "ประกันแพงนะ ผมไม่อยากมีภาระ", a: "เข้าใจเลยครับ แบบถูกๆก็มี และไม่เป็นภาระด้วยนะครับ แต่จริง ๆ แล้วต้องดูว่า คุณลูกค้า ต้องการวางแผนเรื่องอะไร และแบบไหนถึงจะเหมาะกับงบประมาณของเรา คุณลูกค้าเห็นด้วยไหมครับ ผมขอเข้าไปพูดคุยสั้น ๆ ก่อน\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 13, part: 1, q: "มีลูกหรือญาติเป็นตัวแทนฯ อยู่แล้ว", a: "เป็นตัวแทนของพรูเด็นเชียลไหมครับ ถ้าไม่ใช่ ผมก็อยากขอให้รับข้อมูลของเราไว้เพิ่มเติมครับ เผื่อเสริมในส่วนที่แตกต่างกัน ยังไม่ต้องตัดสินใจอะไรครับ ขออนุญาตเข้าไปพูดคุยสั้น ๆ ก่อน\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 14, part: 1, q: "อายุเยอะแล้ว ทำไปก็ไม่คุ้มหรอก", a: "เข้าใจเลยครับ หลายๆท่าน ที่มีอายุก็แจ้งกับผมแบบนี้ ผมก็ไม่อยากให้คุณลูกค้าตัดสินใจทำอะไรที่ไม่เหมาะกับตัวเอง ผมเลยอยากขออนุญาตคุณลูกค้าเข้าไปพูดคุยก่อนว่า ในช่วงวัยของคุณลูกค้า มีเรื่องไหนที่อยากวางแผนหรือให้ความสำคัญเป็นพิเศษ แล้วค่อยดูว่ามีทางเลือกที่เหมาะหรือไม่ครับ ยังไม่ต้องตัดสินใจทำอะไรเลย\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 15, part: 1, q: "ทำไปก็เคลมยาก เคยมีประสบการณ์ไม่ดี", a: "ผมเข้าใจเลยครับคุณลูกค้า และถ้าเป็นผมเจอประสบการณ์ไม่ดีมาก่อน ก็คงมีความกังวลเหมือนกันครับ ผมไม่อยากรีบอธิบายทางโทรศัพท์ว่าเป็นอย่างไร แต่อยากขอโอกาสเข้าไปฟังว่า เหตุการณ์ครั้งนั้นเกิดอะไรขึ้นและอะไรคือสิ่งที่คุณลูกค้ากังวล แล้วผมค่อยให้ข้อมูลในส่วนที่เกี่ยวข้องอย่างตรงไปตรงมาครับ ยังไม่ต้องตัดสินใจทำอะไรครับ เราคุยกันก่อนก็ได้ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 16, part: 1, q: "มีสวัสดิการบริษัทดีอยู่แล้ว", a: "ดีเลยครับคุณลูกค้า ถ้ามีสวัสดิการที่ดีก็ไม่จำเป็นต้องทำเพิ่มนะครับ ผมขอเข้าไปคุยในสิ่งที่ยังขาดหรือสวัสดิการที่ยังไม่มี เช่นโรคร้ายแรงที่จ่ายเงินก้อนใหญ่หลักล้าน หรือ ชดเชยกรณีนอนโรงพยาบาล รับฟังข้อมูลไว้ก่อนก็ได้ครับ แล้วคุณลูกค้าค่อยพิจารณาเองว่าจำเป็นต้องเพิ่มเติมหรือไม่ครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 17, part: 1, q: "ไม่อยากคุยเรื่องประกัน", a: "รับทราบครับ ถ้าไม่คุยเรื่องประกัน เราคุยเรื่องสวัสดิการสุขภาพ การวางแผนเพิ่มเงินเกษียณ หรือการลดหย่อนภาษีดีไหมครับ คุณลูกค้าไม่ต้องกังวล ผมมีหน้าที่ให้คำแนะนำในส่วนนี้เท่านั้น และถ้าคุณลูกค้าสนใจผมแค่เสนอวิธีการที่คุณลูกค้าต้องการ ถ้าฟังแล้วคิดว่ายังไม่ใช่ ก็ไม่เป็นไรครับ ขอโอกาสให้ผมได้เข้าพบ และได้มีโอกาสทำความรู้จักคุณลูกค้า\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 18, part: 1, q: "ไม่รู้จักพรูเด็นเชียล", a: "พรูเด็นเชียลเป็นบริษัทชั้นนำของประเทศอังกฤษครับ ทำธุรกิจมา 178 ปี และในประเทศไทยเราเปิดมา 31 ปี มีช่องทางจัดจำหน่ายที่หลากหลาย เพราะมีทั้ง UOB /TTB /CIMB /Tele sales /Agency /The1 ครับ บริษัทฯ มีทุนจดทะเบียนกว่า 22,000 ล้านบาท สินทรัพย์ในประเทศไทยรวม 200,000 ล้านบาท ผมขออนุญาตเข้าไปแนะนำตัวและบริษัทเพิ่มเติมนะครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" },
+                { id: 19, part: 1, q: "จะเสียเวลาคุณเปล่าๆ", a: "ขอบคุณมาก ๆ ครับ เป็นหน้าที่ของผมอยู่แล้วครับ ในการไปพบคุณลูกค้าที่บ้าน และแนะนำการบริการที่ผมมี ผมยินดีให้คำแนะนำ และให้บริการด้านการวางแผนความคุ้มครอง สวัสดิการสุขภาพ หรือจะเป็นเรื่องการวางแผนเกษียณ หรือทุนการศึกษาให้กับลูกก็ได้ คุณลูกค้าคิดว่าเรื่องไหนน่าจะเป็นประโยชน์ ผมขออนุญาตเตรียมข้อมูลไปเพื่อแนะนำนะครับ\n\nไม่ทราบว่าคุณลูกค้าสะดวกให้เข้าพบวันธรรมดา หรือวันหยุดดีครับ? … ช่วงเช้า หรือช่วงบ่ายดีครับ? … เป็นที่บ้าน ที่ทำงานหรือร้านกาแฟดีครับ? …" }
+    ],
+    // ผลิตภัณฑ์ 4 ปุ่ม: ใส่คำถามในอาร์เรย์ของแต่ละปุ่ม
+    // รูปแบบ: { id: 101, part: 2, q: "ข้อโต้แย้งของลูกค้า", a: "สคริปต์ตัวอย่าง", audioUrl: "ลิงก์ไฟล์เสียงตัวอย่าง.m4a" }
+    // id ไม่ควรซ้ำกับหัวข้ออื่น: part2a เริ่ม 101, part2b เริ่ม 201, part2c เริ่ม 301, part2d เริ่ม 401
+    part2a: [],
+    part2b: [],
+    part2c: [],
+    part2d: [],
+    // ปิดการขาย: 15 ข้อ (id 61-75) สคริปต์จากไฟล์ Word + เสียงตัวอย่างโฟลเดอร์ Tanut
+    part3: [
+        {"id": 61, "part": 3, "q": "ช่วงนี้ผมมีภาระเยอะ", "a": "ผมเข้าใจครับ เรื่องที่เราคุยกัน ก็เพราะคุณมีภาระเยอะ แต่ขออนุญาตนะครับ สมมุติว่า\n\nถ้ามีเหตุการณ์ที่ทำให้เราไม่สามารถดูแลภาระได้ จะทำยังไงที่จะไม่ให้ภาระทั้งหมด ตกไปอยู่กับคนที่เรารักครับ การทำประกัน ก็เพื่อปกป้องภาระนี้ จริงๆเราเริ่มจากเบี้ยที่ ไม่สูงเกินไปดีไหมครับ จากจำนวนที่คุณออมได้สบายๆ เพื่อช่วยปกป้องครอบครัวที่คุณรัก", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/%201.m4a"},
+        {"id": 62, "part": 3, "q": "กลัวว่าในระยะยาว ผมกลัวส่งเบี้ยไม่ไหว", "a": "ถูกต้องเลยครับ เพราะประกันเป็นเรื่องระยะยาว ประกันที่ดี ไม่จำเป็นต้องจ่ายเยอะ แต่คุ้มครองเราได้ในระยะยาวครับ เราเลือกความคุ้มครองในระดับที่คุณลูกค้าสบายใจก่อนดีกว่า ไม่เป็นภาระในอนาคต งั้นเราเลือกระดับการออมที่เหมาะสมกับที่คุณมั่นใจว่าส่งต่อเนื่องได้ดีกว่านะครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/2.m4a"},
+        {"id": 63, "part": 3, "q": "ผมหาเงินอยู่คนเดียว ต้องดูแลค่าใช้จ่ายในบ้านซึ่งค่อนข้างหนักแล้ว", "a": "วันนี้คุณเป็นคนดูแลค่าใช้จ่ายหลัก ถ้ารายได้หยุดลง สิ่งที่น่ากังวลที่สุดคือ ใครจะรับภาระเหล่านี้ต่อ จริงไหมครับ?ถ้าอย่างนั้นเราเริ่มจากเบี้ยที่ไม่กระทบค่าใช้จ่ายประจำก่อน ดีไหมครับ?", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/%203%20.m4a"},
+        {"id": 64, "part": 3, "q": "ผมว่าตอนนี้ ผมยังไม่พร้อมนะ", "a": "เข้าใจเลยครับ และไม่ได้อยากให้ตัดสินใจตอนที่ยังไม่พร้อม ผมขอสอบถามเพิ่มเติมครับ เรื่องที่ไม่พร้อมนั้น เป็นเรื่องของแบบประกัน หรือเรื่องงบประมาณ มากกว่ากันครับ (เรื่องงบประมาณ) อย่างนั้นเริ่มจากงบที่พร้อมและไม่รู้สึกเป็นภาระ แล้วผมค่อยช่วยดูว่าความคุ้มครองแบบไหนเหมาะที่สุดดีไหมครับ ถ้าเริ่มต้นเก็บเดือน 2,000 บาท น้อยไปไหมครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/%204%20.m4a"},
+        {"id": 65, "part": 3, "q": "เอาเงินไปลงทุนคุ้มค่ากว่า", "a": "การนำเงินไปทำอย่างอื่น ก็มีโอกาสได้รับกำไรแต่ก็มีโอกาสขาดทุนเงินต้นได้นะครับ ส่วนประกันชีวิต เป็นการสร้างความคุ้มครองตามทุนประกันทันที และรับรองผลตอบแทนที่แน่นอน ที่สำคัญคุณลูกค้าได้รับเงินเมื่อครบสัญญาแน่ๆ 1 ก้อน ตามเป้าหมาย โดยไม่ว่าสภาพเศรษฐกิจจะเป็นอย่างไร สรุปแล้วเราสามารถทำควบคู่กันได้ครับ คุณลูกค้าก็จะได้รับเงินจากการลงทุน กับ ได้รับเงินครบสัญญาตามที่ซื้อไว้กับประกัน ตามที่เราคุยกัน คิดว่าวันนั้นรับเงินครบสัญญาจากกรมธรรม์อีก 5 ล้านบาท น้อยไปไหมครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/%205%20.m4a"},
+        {"id": 66, "part": 3, "q": "แต่ยังไงผมก็ไม่ชอบประกัน", "a": "ขอบคุณที่คุณลูกค้าแจ้งผมตามตรงนะครับ หลายๆท่านที่ผมพบก็มีเหตุการณ์ที่ทำให้ไม่ชอบประกันเหมือนกันครับ แต่ที่เขาตัดสินใจทำประกัน เขาให้เหตุผลว่า ตัวเขาเวลาป่วยอาจจะไม่ชอบไปหาหมอ เพราะมีค่าใช้จ่ายเยอะ ที่เค้าต้องไปพบหมอ เพราะมันจำเป็น เนื่องจากเค้าอยากหายป่วย ได้อยู่กับครอบครัวที่รักไปนานๆ ประกันก็เหมือนกันครับ มันไม่ได้ขึ้นกับ ชอบ หรือ ไม่ชอบจริงไหมครับ แต่ถ้าเกิดเหตุไม่คาดคิด ครอบครัวที่เรารักก็จะได้ไม่ลำบาก มีแผนสุขภาพติดตัวไว้ คิดว่าแผน 1 ล้าน หรือ 5 ล้าน บาท ดีครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/%206.m4a"},
+        {"id": 67, "part": 3, "q": "บริษัทฯ ที่ทำงาน ก็มีสวัสดิการให้อยู่แล้ว", "a": "เป็นเรื่องที่ดีมากๆเลยครับ คุณอยู่ในบริษัทที่ดี และมีความมั่นคง\n\nผมขออนุญาตสอบถามเพิ่มเติมนะครับปกติ สวัสดิการที่ได้รับ กรณีเราไม่ได้ทำงานแล้ว หรือ เกษียณแล้ว เค้ายังให้สวัสดิการต่อหรือเปล่าครับ ถ้าไม่ ผมว่าเราลองวางแผนกันไว้ก่อนดีไหมครับ ในเวลาที่ยังสุขภาพดี อีกอย่าง บางกรณีสวัสดิการก็อาจไม่ครอบคลุมนะครับ เช่น การชดเชยโรคร้ายแรง หรือ ชดเชยรายวัน เราสามารถเพิ่มเติมเข้าไปได้ ส่วนประกันสุขภาพก็สามารถใช้ Deductiable ได้ด้วยครับ ประหยัดค่าเบี้ยได้ถึงเกือบ30%เลยนะครับ เราเริ่มที่แผน 5 ล้านกับคุ้มครองโรคร้าย ดูก่อนนะครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/%207.m4a"},
+        {"id": 68, "part": 3, "q": "ตอนนี้ลูกเป็นข้าราชการ/เอกชน ใช้สวัสดิการเบิกได้", "a": "อย่างนั้น ผมขออนุญาตพูดคุยในส่วนที่สวัสดิการอาจไม่ครอบคลุม จะได้เสริมในด้านใด เช่น กรณีโรคร้ายแรง เมื่อตรวจพบ ประกันโรงร้ายแรงจะจ่ายเป็นเงินก้อนให้เลยหลักล้าน ส่วนกรณีพักรักษาในโรงพยาบาล จะมีการชดเชยรายวันให้อีก ในส่วนค่ารักษาคุณลูกค้าสามารถเบิกกับสวัสดิการของลูกได้ครับ ประกันในส่วนนี้ สำหรับค่าใช้จ่ายที่ไม่ใช่กับการรักษา ประกันเดือนละหลักร้อย แต่คุ้มครองหลักล้านเลยนะครับ ลองดูที่ 1 ล้าน ก่อน จะน้อยไปไหมครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/8.m4a"},
+        {"id": 69, "part": 3, "q": "ตอนนี้สุขภาพยังแข็งแรงอยู่เลย ยังไม่ต้องรีบทำประกันก็ได้นะ", "a": "ดีนะครับที่คุณดูแลสุขภาพเป็นอย่างดี เป็นเพราะสุขภาพดี เราจึงสามารถวางแผนความคุ้มครองในวันหน้าได้ โดยปกติบริษัทประกัน จะรับประกันคนที่มีสุขภาพดีแบบคุณ เพราะถ้าหลังทำประกันเกิดเจ็บป่วยหรือเป็นโรคประจำตัวบริษัทก็จะคุ้มครอง\n\nแต่ถ้ามาตรวจพบ ว่าเป็นมาก่อนทำประกัน ก็จะทำประกันไม่ได้ครับ ถ้าอย่างนั้น ผมขอสอบถามเรื่องประวัติสุขภาพคุณดูก่อน เพื่อให้ทางบริษัทฯ ได้พิจารณาดูก่อน ดีไหมครับ (หยิบอุปกรณ์เข้า PRU Prompt)", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/9.m4a"},
+        {"id": 70, "part": 3, "q": "ผมยังอายุน้อยอยู่เลย ต้องรีบทำวันนี้เลยเหรอ", "a": "ใช่แล้วครับ เพราะคนส่วนใหญ่จะเสียดาย ตอนอายุเยอะทำประกัน เบี้ยประกันจะสูง แถมถ้ามีโรคประจำตัวตอนอายุเยอะๆประกันอาจไม่คุ้มครองแล้วด้วย แต่ถ้าเค้าทำ ตอนที่อายุน้อย สุขภาพแข็งแรงแบบคุณ ประกันก็พิจารณาอนุมัติได้รวดเร็ว ได้เปรียบมากๆเลยครับ อย่างนั้นผมขอบัตรประชาชนเพื่อกรอกข้อมูล เพื่อให้บริษัทพิจารณาดูก่อนนะครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/10.m4a"},
+        {"id": 71, "part": 3, "q": "จริงๆผมไม่เคยเจ็บป่วย ต้องเข้าโรงพยาบาลเลยนะ", "a": "เป็นเรื่องที่ดีมากเลยครับ เพียงแต่จากวันนี้ เราเองคงไม่สามารถระบุได้ว่า เราจะเจ็บป่วยเมื่อไร การที่ทำประกันในวันนี้ เค้าบอกว่า ทำเร็วไป 1 ปี ก็ดีกว่า ทำช้าไป 1 วัน นะครับ เพราะทำแล้วไม่เจ็บป่วยถือว่าเป็นกำไรชีวิต แต่ถ้ามีเหตุต้องรักษา บริษัทฯก็ต้องให้ความคุ้มครองเพราะเราทำตอนสุขภาพดี ขอบัตรประชาชนเพื่อทำเรื่องเสนอให้ บมจ.พรูฯ พิจารณาทำสัญญาด้วยครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/11.m4a"},
+        {"id": 72, "part": 3, "q": "คิดว่าอยากเก็บเงิน ไปซื้อบ้านก่อน", "a": "คุณลูกค้าครับ จริงๆ เราสามารถวางแผนไปพร้อมๆกันได้ด้วยนะครับเพราะคุณเป็นคนที่มองอนาคตอยากให้ครอบครัวมีที่อยู่อาศัย สำหรับโครงการที่ผมมาพูดคุยในวันนี้ ก็เพื่อป้องกัน คนที่หารายได้ เพราะหากไม่สามารถทำงานเก็บเงินเพื่อบ้านได้โครงการนี้จะช่วยรับรองให้ครอบครัวมีบ้านอย่างที่คุณตั้งใจ และหากไม่เกิดเหตุใดๆยังเป็นเงินเก็บอีก 1 ก้อน ไว้ปลดภาระบ้านได้อีกด้วยนะครับ คิดว่า 1 ล้าน หรือ 5 ล้านบาทดีครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/12.m4a"},
+        {"id": 73, "part": 3, "q": "มีญาติทำประกันอยู่แล้ว", "a": "ดี เลยครับ แล้วคุณลูกค้าได้ซื้อประกันกับญาติแล้วใช่ไหมครับเพราะการทำประกันกับญาติก็เป็นเรื่องที่สบายใจดีครับ มีอะไรเราก็บอกญาติเราได้ตรงๆแต่บางครั้งเวลาเรามีปัญหาก็ต้องค่อยๆ อธิบายนะครับเพราะความสนิทอาจทำให้ไม่สามารถบอกได้ไม่เต็มที่ เหมือนการที่เรามีบัญชีธนาคารหลายธนาคาร เราก็จะได้รับการบริการที่เปรียบเทียบได้และยังมีคนดูแลหลายคนด้วยครับ พร้อมที่จะให้ผมบริการเพิ่มอีกคนนะครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/13.m4a"},
+        {"id": 74, "part": 3, "q": "เคยเห็นข่าว เวลาเคลมแล้วบริษัทประกันไม่จ่าย", "a": "กรณีที่บริษัทฯไม่จ่ายสินไหม เนื่องจากต้องปฎิบัติตามกฎหมายอย่างเคร่งครัด ถ้าเคลมไม่ถูกต้องบริษัทเองก็ไม่สามารถจ่ายได้ครับ เนื่องจากจ่ายไปแล้ว จะโดนปรับจาก คปภ. เป็นล้านเลย แต่ถ้าเคลมถูกต้องไม่มีการปกปิดตั้งแต่ทำประกัน บริษัทจ่ายแน่นอน เราเป็นบริษัทฯที่มีธรรมาภิบาลและยึดมั่นในสัญญาฯ ขอบัตรประชาชนเพื่อทำเรื่องเสนอให้พรูฯ พิจารณาทำสัญญาด้วยครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/14.m4a"},
+        {"id": 75, "part": 3, "q": "เก็บเงินไว้ จ่ายค่ารักษาเองดีกว่านะ", "a": "การเก็บเงินไว้จ่ายเองก็เหมาะกับการที่เราไม่ป่วยบ่อยหรือนานๆ ป่วยที ซึ่งก็ดีกว่าการซื้อประกันนะครับ เพียงแต่ว่าเราอาจจะไม่สามารถกำหนดได้ว่า หากในอนาคตเกิดเจ็บป่วยขึ้นในแต่ละครั้ง วงเงินค่ารักษาจะเป็นเท่าไร ยิ่งถ้าเป็นโรคร้ายแรงอีก ผมเห็นว่าการโอนภาระเรื่องค่าใช้จ่ายให้บริษัทประกันรับผิดชอบแบบเหมาจ่ายให้ และเรายังรู้ค่าเบี้ยประกันที่ต้องจ่ายแน่ๆ น่าจะดีกว่า ส่วนเงินที่เราเก็บก็นำไปลงทุนให้เติบโต นำผลตอบแทนมาจ่ายเป็นค่าเบี้ยประกันก็ได้นะครับ คิดว่า 1 ล้าน หรือ 5 ล้านบาทดีครับ", "audioUrl": "https://wzwyotzzxycqfwercakh.supabase.co/storage/v1/object/public/responses/Trainer%20Voice/Tanut/15.m4a"}
+    ]
+};
+
+function showAlert(message, type = 'info') {
+    mainAlert.innerHTML = message;
+    mainAlert.className = `alert ${type}`;
+    mainAlert.style.display = 'block';
+    setTimeout(() => { mainAlert.style.display = 'none'; }, 5000);
+}
+
+window.saveUserName = function() {
+    localStorage.setItem('examUserName_agent', inputUserName.value.trim());
+    checkSubmitButtonStatus();
+};
+
+function initializeUser() {
+    let userId = localStorage.getItem(USER_ID_KEY);
+    if (!userId) { userId = uuidv4(); localStorage.setItem(USER_ID_KEY, userId); }
+    currentUserId = userId;
+}
+
+async function logSessionStart(userName) {
+    if (!supabase) return false;
+    const dataToInsert = {
+        user_id: currentUserId,
+        name: userName,
+        user_group: userGroupName,
+        insurance_type: 'Voice HD - SETUP',
+        part_number: 0,
+        question_text: 'เริ่มทำแบบทดสอบ (Setup)'
+    };
+    try {
+        const { error: insertError } = await supabase.from('submissions_agent').insert([dataToInsert]);
+        if (insertError) {
+            console.error("Superbase Session Log Error:", insertError);
+            throw new Error(insertError.message || "Database insert error occurred.");
+        }
+        return true;
+    } catch (err) {
+        console.error("Superbase Session Log Error:", err);
+        window.lastSessionError = err.message || String(err);
+        return false;
+    }
+}
+
+async function uploadAudioToSupabase(fileBlob, questionId, partKey, userName) {
+    const partNum = partKey.replace('part', 'P');
+    const safeUserName = userName.replace(/[^a-zA-Z0-9ก-ฮเ-์]/g, '_');
+    const fileName = `${safeUserName}_${partNum}_${questionId}_${Date.now()}.webm`;
+    const filePath = `agent/${partKey}/${questionId}/${fileName}`;
+    const audioFile = new File([fileBlob], fileName, { type: fileBlob.type });
+    const { error } = await supabase.storage.from('responses').upload(filePath, audioFile, { cacheControl: '3600', upsert: false });
+    if (error) { throw new Error(`Upload failed for ${questionId}: ${error.message}`); }
+    const { data: { publicUrl } } = supabase.storage.from('responses').getPublicUrl(filePath);
+    return publicUrl;
+}
+
+async function submitSingleResponse(blob, question, userName, partKey) {
+    const publicUrl = await uploadAudioToSupabase(blob, question.id, partKey, userName);
+    const questionNumber = question.id;
+    const responseToInsert = {
+        user_id: currentUserId,
+        name: userName,
+        user_group: userGroupName,
+        insurance_type: `Voice HD - ${partDbName[partKey]}`,
+        part_number: questionNumber,
+        question_text: question.q,
+        audio_url: publicUrl
+    };
+    const { error: insertError } = await supabase.from('submissions_agent').insert([responseToInsert]);
+    if (insertError) { throw new Error(`Database submission failed: ${insertError.message}`); }
+    return questionNumber;
+}
+
+function renderQuestionList() {
+    questionList.innerHTML = '';
+    shuffledQuestions.forEach((q, index) => {
+        const item = document.createElement('div');
+        item.className = 'question-item';
+        item.id = `q-item-${index}`;
+        item.setAttribute('onclick', `displayQuestionFromList(${index})`);
+        const status = audioBlobs[currentPart][q.id];
+        let statusIcon = '•';
+        let color = 'red';
+        if (status) {
+            if (status.submitted) { statusIcon = '✓'; color = 'green'; }
+            else { color = 'orange'; }
+        }
+        item.innerHTML = `ข้อที่ ${index + 1} <span class="status-icon" style="color: ${color};">${statusIcon}</span>`;
+        if (index === currentIndex) { item.classList.add('active'); }
+        questionList.appendChild(item);
+    });
+    checkSubmitButtonStatus();
+}
+
+function updateQuestionUI(question) {
+    document.getElementById('currentQuestionTitle').textContent = `${partLabels[currentPart]}: คำถามข้อที่ ${currentIndex + 1}`;
+    questionPrompt.textContent = question.q;
+    requiredAnswer.innerHTML = question.a;
+
+    const sampleBox = document.getElementById('sampleAudioBox'), sampleAudio = document.getElementById('sampleAudio');
+    if (question.audioUrl) {
+        if (sampleAudio.getAttribute('src') !== question.audioUrl) { sampleAudio.pause(); sampleAudio.src = question.audioUrl; }
+        sampleBox.style.display = 'block';
+    } else {
+        sampleAudio.pause(); sampleAudio.removeAttribute('src'); sampleBox.style.display = 'none';
+    }
+
+    const status = audioBlobs[currentPart][question.id];
+    playbackAudio.src = '';
+    playbackAudio.style.display = 'none';
+    sendQuestionBtn.style.display = 'none';
+    sendQuestionBtn.disabled = true;
+
+    if (status && status.blob) {
+        playbackAudio.src = currentBlobUrl;
+        playbackAudio.style.display = 'block';
+        playbackAudio.load();
+        if (status.submitted) {
+            recordingStatus.textContent = 'สถานะ: ส่งข้อมูลสำเร็จแล้ว (สามารถฟังหรือบันทึกใหม่เพื่อส่งซ้ำได้)';
+            sendQuestionBtn.textContent = 'บันทึกใหม่และส่งซ้ำ';
+        } else {
+            recordingStatus.textContent = 'สถานะ: บันทึกสำเร็จแล้ว! กรุณาฟังและกด "ส่งคำตอบข้อนี้"';
+            sendQuestionBtn.textContent = 'ส่งคำตอบข้อนี้ (บันทึกและส่ง)';
+        }
+        sendQuestionBtn.style.display = 'block';
+        sendQuestionBtn.disabled = false;
+    } else {
+        recordingStatus.textContent = 'สถานะ: ยังไม่ได้เริ่มบันทึกเสียง';
+    }
+    startRecBtn.disabled = false;
+    stopRecBtn.disabled = true;
+    renderQuestionList();
+}
+
+function displayQuestion(index) {
+    currentIndex = index;
+    const question = shuffledQuestions[index];
+    if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); currentBlobUrl = null; }
+    const status = audioBlobs[currentPart][question.id];
+    if (status && status.blob) { currentBlobUrl = URL.createObjectURL(status.blob); }
+    updateQuestionUI(question);
+}
+
+window.displayQuestionFromList = function(index) {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        if (!confirm('กรุณาหยุดบันทึกเสียงก่อนเปลี่ยนไปทำข้ออื่น')) { return; }
+        if (mediaRecorder.state === 'recording') { mediaRecorder.stop(); }
+    }
+    displayQuestion(index);
+};
+
+window.toggleProducts = function() {
+    const box = document.getElementById('productButtons');
+    box.style.display = box.style.display === 'none' ? 'flex' : 'none';
+};
+
+// ถ้าหัวข้อยังไม่มีคำถาม ให้แจ้งว่ากำลังเตรียมเนื้อหา (ยังไม่บันทึก session)
+window.loadPart = async function(partKey) {
+    if (!questions[partKey] || questions[partKey].length === 0) {
+        showAlert(`กำลังเตรียมเนื้อหา "${partLabels[partKey]}" โปรดรอสักครู่`, 'info');
+        return;
+    }
+    const userName = inputUserName.value.trim();
+    if (!userName) {
+        showAlert('กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนเลือกหัวข้อ', 'warning');
+        return;
+    }
+
+    window.saveUserName();
+    loadingOverlay.style.display = 'flex';
+    recordingStatus.textContent = 'สถานะ: กำลังบันทึกข้อมูลการเริ่มต้นเซสชัน...';
+    const logSuccess = await logSessionStart(userName);
+    loadingOverlay.style.display = 'none';
+
+    if (!logSuccess) {
+        showAlert(`❌ พบข้อผิดพลาดในการบันทึกข้อมูลกลุ่มเข้าสู่ Superbase แต่สามารถดำเนินการต่อได้<br><small>สาเหตุ: ${window.lastSessionError || 'ไม่ทราบ'}</small>`, 'warning');
+    } else {
+        showAlert(`✅ บันทึกข้อมูลเริ่มต้นเซสชัน (กลุ่ม: ${userGroupName || '-'}) สำเร็จแล้ว!`, 'success');
+    }
+
+    currentPart = partKey;
+    shuffledQuestions = questions[currentPart];
+    document.getElementById('examArea').style.display = 'grid';
+
+    document.querySelectorAll('.part-button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`btn${partKey.charAt(0).toUpperCase() + partKey.slice(1)}`).classList.add('active');
+    if (partKey.startsWith('part2')) document.getElementById('btnProducts').classList.add('active');
+
+    displayQuestion(0);
+};
+
+window.handleSingleSubmission = async function() {
+    const question = shuffledQuestions[currentIndex];
+    const questionId = question.id;
+    const userName = inputUserName.value.trim();
+    const status = audioBlobs[currentPart][questionId];
+
+    if (!status || !status.blob) {
+        showAlert('ไม่พบไฟล์เสียงที่บันทึกไว้สำหรับข้อนี้ กรุณาบันทึกใหม่', 'warning');
+        return;
+    }
+
+    loadingOverlay.style.display = 'flex';
+    recordingStatus.textContent = 'สถานะ: กำลังอัปโหลดและส่งข้อมูล...';
+    sendQuestionBtn.disabled = true;
+
+    try {
+        const questionNum = await submitSingleResponse(status.blob, question, userName, currentPart);
+        loadingOverlay.style.display = 'none';
+        audioBlobs[currentPart][questionId].submitted = true;
+        recordingStatus.textContent = 'สถานะ: ส่งข้อมูลสำเร็จแล้ว!';
+        showAlert(`ส่ง ${partLabels[currentPart]} ข้อที่ ${questionNum} สำเร็จแล้ว!`, 'success');
+    } catch (error) {
+        loadingOverlay.style.display = 'none';
+        console.error('Submission Error:', error);
+        if (audioBlobs[currentPart][questionId]) { audioBlobs[currentPart][questionId].submitted = false; }
+        recordingStatus.textContent = 'สถานะ: เกิดข้อผิดพลาดในการส่งข้อมูล!';
+        showAlert(`ส่งข้อมูลล้มเหลว: ${error.message}`, 'warning');
+    } finally {
+        updateQuestionUI(question);
+    }
+};
+
+window.handleStartRecording = async function() {
+    if (!inputUserName.value.trim()) {
+        showAlert('กรุณากรอกชื่อ-นามสกุล/รหัสพนักงานก่อนเริ่มบันทึก', 'warning');
+        return;
+    }
+
+    try {
+        // หยุดเสียงตัวอย่างก่อนอัด เพื่อไม่ให้เสียงตัวอย่างติดไปในไฟล์ตอบ
+        document.getElementById('sampleAudio').pause();
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = event => { audioChunks.push(event.data); };
+
+        mediaRecorder.onstart = () => {
+            recordingStatus.textContent = 'สถานะ: กำลังบันทึกเสียง...';
+            startRecBtn.disabled = true;
+            stopRecBtn.disabled = false;
+            playbackAudio.style.display = 'none';
+            sendQuestionBtn.style.display = 'none';
+            playbackAudio.src = '';
+        };
+
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            audioChunks = [];
+            const question = shuffledQuestions[currentIndex];
+            if (currentBlobUrl) { URL.revokeObjectURL(currentBlobUrl); }
+            currentBlobUrl = URL.createObjectURL(audioBlob);
+            audioBlobs[currentPart][question.id] = { blob: audioBlob, submitted: false };
+            stream.getTracks().forEach(track => track.stop());
+            updateQuestionUI(question);
+            showAlert('บันทึกเสียงสำเร็จแล้ว! กรุณาตรวจสอบแล้วกด "ส่งคำตอบข้อนี้"', 'info');
+        };
+
+        mediaRecorder.onerror = (event) => {
+            console.error("MediaRecorder Error:", event.error);
+            recordingStatus.textContent = 'สถานะ: บันทึกผิดพลาด! ' + event.error.name;
+            startRecBtn.disabled = false;
+            stopRecBtn.disabled = true;
+            stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+    } catch (err) {
+        console.error('Recording failed:', err);
+        showAlert('❌ ไม่สามารถเข้าถึงไมโครโฟนได้: ' + err.message, 'warning');
+        startRecBtn.disabled = false;
+        stopRecBtn.disabled = true;
+    }
+};
+
+window.handleStopRecording = function() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        stopRecBtn.disabled = true;
+        mediaRecorder.stop();
+    }
+};
+
+function checkSubmitButtonStatus() {
+    if (shuffledQuestions.length === 0) { submitBtn.disabled = true; return; }
+    const totalQuestions = shuffledQuestions.length;
+    const submittedCount = Object.values(audioBlobs[currentPart]).filter(s => s.submitted).length;
+    submitBtn.textContent = `ส่งงาน ${partLabels[currentPart]} (ส่งแล้ว ${submittedCount}/${totalQuestions} ข้อ)`;
+    submitBtn.disabled = submittedCount === 0;
+}
+
+window.submitExam = function() {
+    const totalQuestions = shuffledQuestions.length;
+    const submittedCount = Object.values(audioBlobs[currentPart]).filter(s => s.submitted).length;
+
+    if (totalQuestions > 0 && submittedCount === totalQuestions) {
+        showAlert(`${partLabels[currentPart]} ส่งข้อมูลครบถ้วน ${submittedCount}/${totalQuestions} ข้อแล้ว!`, 'success');
+        document.getElementById('examArea').style.display = 'none';
+        document.getElementById('currentQuestionTitle').textContent = 'ส่งงานสำเร็จ';
+        document.getElementById('questionPrompt').textContent = 'กรุณาเลือกหัวข้ออื่นเพื่อทำแบบทดสอบต่อ';
+        document.getElementById('requiredAnswer').textContent = '';
+    } else if (submittedCount > 0) {
+        showAlert(`**คุณได้ส่งไปแล้ว ${submittedCount} ข้อ** แต่ยังเหลืออีก ${totalQuestions - submittedCount} ข้อที่ยังไม่ได้ส่ง`, 'warning');
+    } else {
+        showAlert('ยังไม่มีการส่งไฟล์เสียงสำเร็จเลย กรุณาส่งอย่างน้อย 1 ข้อก่อน', 'warning');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    initializeUser();
+    const regName = (qp.get('name') || ss('user_name')).trim();
+    const storedUserName = regName || localStorage.getItem('examUserName_agent');
+    if (storedUserName) { inputUserName.value = storedUserName; }
+    checkSubmitButtonStatus();
+});
+</script>
+</body>
+</html>
